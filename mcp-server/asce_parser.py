@@ -4,6 +4,7 @@ from functools import lru_cache
 from datetime import datetime, timezone
 import hashlib
 import json
+import sys
 import shutil
 from pathlib import Path
 from typing import Any, Optional
@@ -12,6 +13,16 @@ import xml.etree.ElementTree as ET
 import networkx as nx
 from bs4 import BeautifulSoup
 from mcp.server.fastmcp import FastMCP
+
+MCP_SERVER_DIR = Path(__file__).resolve().parent
+if str(MCP_SERVER_DIR) not in sys.path:
+    sys.path.insert(0, str(MCP_SERVER_DIR))
+
+from bootstrap.templates import (
+    get_bootstrap_pattern as _get_bootstrap_pattern,
+    list_bootstrap_patterns as _list_bootstrap_patterns,
+    render_bootstrap_pattern as _render_bootstrap_pattern,
+)
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -42,6 +53,8 @@ TYPE_CODE_MAP = {
     "9": "comment",
 }
 
+NODE_TYPE_CODE_MAP = {value: key for key, value in TYPE_CODE_MAP.items()}
+
 
 def _local_name(tag: str) -> str:
     if tag.startswith("{"):
@@ -71,6 +84,25 @@ def _normalize_capabilities(capabilities: Any) -> list[str]:
         if text:
             normalized.append(text)
     return sorted(set(normalized))
+
+
+def _schema_node_type_code(node_type: str) -> str:
+    normalized = _normalize_text(node_type).lower()
+    if normalized in NODE_TYPE_CODE_MAP:
+        return NODE_TYPE_CODE_MAP[normalized]
+    if normalized.isdigit() and normalized in TYPE_CODE_MAP:
+        return normalized
+    return NODE_TYPE_CODE_MAP["other"]
+
+
+def _schema_node_type_key(node_type: str) -> str:
+    normalized = _normalize_text(node_type)
+    if normalized in TYPE_CODE_MAP:
+        return TYPE_CODE_MAP[normalized]
+    lowered = normalized.lower()
+    if lowered in NODE_TYPE_CODE_MAP:
+        return lowered
+    return "other"
 
 
 def register_evidence_provider(
@@ -139,6 +171,19 @@ register_evidence_provider(
     "asce_tools",
     "Schema-aware ASCE parser, neighborhood, registry, and write-back tools",
     capabilities=[
+        "create_assurance_case",
+        "list_bootstrap_patterns",
+        "get_bootstrap_pattern",
+        "instantiate_pattern",
+        "create_claim",
+        "create_context",
+        "create_assumption",
+        "create_evidence_placeholder",
+        "create_defeater",
+        "create_link",
+        "find_unresolved_gaps",
+        "generate_case_summary",
+        "validate_case_structure",
         "parse_assurance_case",
         "get_assurance_neighborhood",
         "get_root_claims",
@@ -795,6 +840,205 @@ def _find_element(root: ET.Element, node_id: str) -> Optional[ET.Element]:
     return lookup.get(node_id)
 
 
+def _bootstrap_case_root(case_title: str | None = None) -> ET.Element:
+    root = ET.Element("asce")
+    if case_title:
+        title = ET.SubElement(root, "title")
+        title.text = _normalize_text(case_title)
+
+    ET.SubElement(root, "nodes")
+    ET.SubElement(root, "links")
+
+    return root
+
+
+def _bootstrap_destination_path(output_path: str | None) -> Path:
+    if output_path:
+        candidate = Path(output_path).expanduser()
+        if not candidate.is_absolute():
+            candidate = Path.cwd() / candidate
+        return candidate
+    return Path.cwd() / "bootstrap-case.axml"
+
+
+def _bootstrap_default_strategy(pattern_name: str | None = None) -> str:
+    if not pattern_name:
+        return "hybrid"
+    lowered = pattern_name.lower()
+    if "security" in lowered:
+        return "threat-oriented"
+    if "safety" in lowered:
+        return "risk-oriented"
+    return "hybrid"
+
+
+def _bootstrap_node_attrs(role: str, extra: dict[str, Any] | None = None) -> dict[str, Any]:
+    attrs = {"bootstrap-role": role}
+    if extra:
+        attrs.update({str(key): _normalize_text(value) for key, value in extra.items()})
+    return attrs
+
+
+def _bootstrap_node_defaults(role: str) -> tuple[str, str]:
+    role = _normalize_text(role).lower()
+    if role in {"strategy"}:
+        return "argument", "supports"
+    if role in {"context", "assumption"}:
+        return "comment", "commentson"
+    if role in {"evidence-placeholder", "evidence-gap"}:
+        return "evidence", "isevidencefor"
+    if role in {"defeater"}:
+        return "defeater", "defeats"
+    return "other", "supports"
+
+
+def _bootstrap_parent_for_layout(root: ET.Element, parent_node_id: str | None) -> ET.Element | None:
+    if not parent_node_id:
+        return None
+    return _find_element(root, parent_node_id)
+
+
+def _append_bootstrap_node(
+    root: ET.Element,
+    *,
+    title: str,
+    annotation: str | None = None,
+    role: str = "context",
+    node_type: str | None = None,
+    status_fields: dict[str, Any] | None = None,
+    attributes: dict[str, Any] | None = None,
+    parent_node_id: str | None = None,
+    link_type: str | None = None,
+) -> tuple[str, str | None]:
+    nodes_container = root.find("nodes")
+    if nodes_container is None:
+        nodes_container = ET.SubElement(root, "nodes")
+
+    existing_ids = _existing_ids(root, "node")
+    node_id = _allocate_numeric_reference(existing_ids, "N")
+    resolved_type, default_link_type = _bootstrap_node_defaults(role)
+    resolved_type = _schema_node_type_key(node_type or resolved_type)
+    link_type_key = _normalize_text(link_type) or default_link_type
+
+    node = ET.SubElement(nodes_container, "node")
+    node.set("reference", node_id)
+    node_type_el = ET.SubElement(node, "type")
+    node_type_el.text = _schema_node_type_code(resolved_type)
+    user_id = ET.SubElement(node, "user-id")
+    user_id.text = node_id
+    user_title = ET.SubElement(node, "user-title")
+    user_title.text = _normalize_text(title)
+    html_annotation = ET.SubElement(node, "html-annotation")
+    html_annotation.text = _normalize_text(annotation or title)
+
+    layout = ET.SubElement(node, "layout")
+    parent_element = _bootstrap_parent_for_layout(root, parent_node_id)
+    layout_source = parent_element if parent_element is not None else node
+    layout_attrs = _layout_offsets(layout_source, dx=4000, dy=0)
+    for key, value in layout_attrs.items():
+        layout.set(key, value)
+
+    status_container = ET.SubElement(node, "status-fields")
+    _ensure_status_field(status_container, "annotation", _normalize_text(annotation or title))
+    _ensure_status_field(status_container, "confidence", _normalize_text((status_fields or {}).get("confidence", "low" if role in {"evidence-placeholder", "assumption"} else "medium")))
+    if status_fields:
+        for key, value in status_fields.items():
+            if key in {"annotation", "confidence"}:
+                continue
+            _ensure_status_field(status_container, str(key), _normalize_text(value))
+
+    node.set("bootstrap-role", _normalize_text(role))
+    if attributes:
+        for key, value in attributes.items():
+            node.set(str(key), _normalize_text(value))
+
+    _ensure_views_include(root, node_id, layout_attrs, parent_node_id)
+
+    created_link_reference: str | None = None
+    if parent_node_id:
+        link_reference = _unique_link_reference(_existing_ids(root, "link"), parent_node_id, node_id, link_type_key)
+        link = _ensure_link_exists(root, link_reference, _link_type_code(link_type_key), parent_node_id, node_id)
+        created_link_reference = _normalize_text(link.attrib.get("reference"))
+
+    return node_id, created_link_reference
+
+
+def _bootstrap_case_summary(graph: nx.DiGraph, root_claims: list[dict[str, Any]], gaps: list[dict[str, Any]]) -> str:
+    claim_titles = ", ".join(item.get("title") or item.get("id") for item in root_claims[:3]) or "none"
+    gap_count = len(gaps)
+    defeater_count = sum(1 for _, data in graph.nodes(data=True) if _normalize_text(data.get("type")) == "defeater")
+    evidence_count = sum(1 for _, data in graph.nodes(data=True) if _normalize_text(data.get("type")) == "evidence")
+    return (
+        f"Bootstrap summary: {len(root_claims)} root claim(s), {evidence_count} evidence node(s), "
+        f"{defeater_count} defeater node(s), and {gap_count} unresolved gap(s). "
+        f"Primary roots: {claim_titles}."
+    )
+
+
+def _find_unresolved_gaps(graph: nx.DiGraph) -> list[dict[str, Any]]:
+    gaps: list[dict[str, Any]] = []
+    for node_id, data in graph.nodes(data=True):
+        if data.get("tag") != "node":
+            continue
+
+        attributes = data.get("attributes", {}) or {}
+        role = _normalize_text(attributes.get("bootstrap-role") or attributes.get("bootstrap_role") or data.get("bootstrap-role"))
+        title = _normalize_text(data.get("title"))
+        children = list(graph.successors(node_id))
+
+        if role in {"evidence-placeholder", "gap"}:
+            gaps.append({"id": node_id, "title": title, "reason": f"bootstrap role is {role}"})
+            continue
+
+        if _normalize_text(data.get("type")) in {"claim", "argument"} and not children:
+            gaps.append({"id": node_id, "title": title, "reason": "unsupported branch"})
+
+    return gaps
+
+
+def _materialize_pattern_branch(
+    root: ET.Element,
+    branch_spec: dict[str, Any],
+    *,
+    system_name: str,
+    system_context: str,
+    strategy: str,
+    parent_node_id: str | None = None,
+) -> list[str]:
+    attributes = dict(branch_spec.get("attributes", {}) or {})
+    role = _normalize_text(branch_spec.get("role") or attributes.get("bootstrap-role") or branch_spec.get("node_type"))
+    node_id, _ = _append_bootstrap_node(
+        root,
+        title=_normalize_text(branch_spec.get("title", "")),
+        annotation=_normalize_text(branch_spec.get("annotation", "")),
+        role=role or _schema_node_type_key(branch_spec.get("node_type", "other")),
+        node_type=_normalize_text(branch_spec.get("node_type", "other")),
+        status_fields={
+            "annotation": _normalize_text(branch_spec.get("annotation", "")),
+            "confidence": _normalize_text(branch_spec.get("status_fields", {}).get("confidence", "low" if role in {"context", "assumption", "evidence-placeholder"} else "medium")),
+            **{str(key): value for key, value in (branch_spec.get("status_fields", {}) or {}).items() if key not in {"annotation", "confidence"}},
+        },
+        attributes=attributes,
+        parent_node_id=parent_node_id,
+        link_type=_normalize_text(branch_spec.get("link_type", "")) or None,
+    )
+
+    created = [node_id]
+    for child in branch_spec.get("children", []) or []:
+        created.extend(
+            _materialize_pattern_branch(
+                root,
+                child,
+                system_name=system_name,
+                system_context=system_context,
+                strategy=strategy,
+                parent_node_id=node_id,
+            )
+        )
+
+    return created
+
+
 @mcp.tool()
 def get_node_children(parent_node_id: str, file_path: str | None = None) -> dict[str, Any]:
     """Return the immediate children connected to a node."""
@@ -1100,6 +1344,376 @@ def get_evidence_provider(name: str) -> dict[str, Any]:
     if provider is None:
         raise ValueError(f"Unknown evidence provider: {name}")
     return provider
+
+
+@mcp.tool()
+def list_bootstrap_patterns() -> list[dict[str, str]]:
+    """List the available bootstrap templates."""
+    return _list_bootstrap_patterns()
+
+
+@mcp.tool()
+def get_bootstrap_pattern(name: str) -> dict[str, Any]:
+    """Return one bootstrap template by name."""
+    return _get_bootstrap_pattern(name)
+
+
+@mcp.tool()
+def create_assurance_case(
+    output_path: str | None = None,
+    title: str | None = None,
+    template_name: str | None = None,
+    system_name: str | None = None,
+    system_context: str | None = None,
+    strategy: str | None = None,
+) -> dict[str, Any]:
+    """Create a fresh assurance case scaffold and optionally seed it from a bootstrap template."""
+    destination = _bootstrap_destination_path(output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    case_title = _normalize_text(title or f"{system_name or 'Bootstrap'} assurance case")
+    root = _bootstrap_case_root(case_title)
+    tree = ET.ElementTree(root)
+    tree.write(str(destination), encoding="utf-8", xml_declaration=True)
+
+    active_path = _remember_active_axml_path(destination)
+    SHARED_AGENT_CONTEXT["active_case_path"] = active_path
+    if system_context:
+        SHARED_AGENT_CONTEXT["system_brief"] = _normalize_text(system_context)
+
+    created_nodes: list[str] = []
+    if template_name:
+        created_nodes = instantiate_pattern(
+            template_name,
+            file_path=str(active_path),
+            system_name=system_name or case_title,
+            system_context=system_context or "No system context provided.",
+            strategy=strategy or _bootstrap_default_strategy(template_name),
+        )["created_node_ids"]
+
+    return {
+        "file_path": active_path,
+        "status": "written",
+        "template_name": template_name,
+        "created_node_ids": created_nodes,
+    }
+
+
+def _create_bootstrap_node_tool(
+    *,
+    file_path: str | None,
+    title: str,
+    annotation: str | None = None,
+    role: str,
+    node_type: str | None = None,
+    parent_node_id: str | None = None,
+    link_type: str | None = None,
+    status_fields: dict[str, Any] | None = None,
+    attributes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    file_path = _resolve_file_path(file_path)
+    create_backup(file_path)
+    tree, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+
+    if parent_node_id is not None and parent_node_id not in graph:
+        raise ValueError(f"Unknown node_id: {parent_node_id}")
+
+    node_id, link_reference = _append_bootstrap_node(
+        root,
+        title=title,
+        annotation=annotation,
+        role=role,
+        node_type=node_type,
+        status_fields=status_fields,
+        attributes=attributes,
+        parent_node_id=parent_node_id,
+        link_type=link_type,
+    )
+    tree.write(str(file_path), encoding="utf-8", xml_declaration=True)
+
+    return {
+        "file_path": str(file_path),
+        "status": "written",
+        "node_id": node_id,
+        "link_reference": link_reference,
+        "node_type": _schema_node_type_key(node_type or _bootstrap_node_defaults(role)[0]),
+        "role": role,
+    }
+
+
+@mcp.tool()
+def create_claim(
+    title: str,
+    annotation: str | None = None,
+    file_path: str | None = None,
+    parent_node_id: str | None = None,
+    link_type: str | None = "supports",
+    status_fields: dict[str, Any] | None = None,
+    attributes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return _create_bootstrap_node_tool(
+        file_path=file_path,
+        title=title,
+        annotation=annotation,
+        role="claim",
+        node_type="claim",
+        parent_node_id=parent_node_id,
+        link_type=link_type,
+        status_fields=status_fields,
+        attributes=attributes,
+    )
+
+
+@mcp.tool()
+def create_context(
+    title: str,
+    annotation: str | None = None,
+    file_path: str | None = None,
+    parent_node_id: str | None = None,
+    link_type: str | None = "commentson",
+    status_fields: dict[str, Any] | None = None,
+    attributes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return _create_bootstrap_node_tool(
+        file_path=file_path,
+        title=title,
+        annotation=annotation,
+        role="context",
+        node_type="comment",
+        parent_node_id=parent_node_id,
+        link_type=link_type,
+        status_fields=status_fields,
+        attributes=attributes,
+    )
+
+
+@mcp.tool()
+def create_assumption(
+    title: str,
+    annotation: str | None = None,
+    file_path: str | None = None,
+    parent_node_id: str | None = None,
+    link_type: str | None = "commentson",
+    status_fields: dict[str, Any] | None = None,
+    attributes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return _create_bootstrap_node_tool(
+        file_path=file_path,
+        title=title,
+        annotation=annotation,
+        role="assumption",
+        node_type="comment",
+        parent_node_id=parent_node_id,
+        link_type=link_type,
+        status_fields=status_fields,
+        attributes=attributes,
+    )
+
+
+@mcp.tool()
+def create_evidence_placeholder(
+    title: str,
+    annotation: str | None = None,
+    file_path: str | None = None,
+    parent_node_id: str | None = None,
+    link_type: str | None = "isevidencefor",
+    status_fields: dict[str, Any] | None = None,
+    attributes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    merged_status_fields = {"confidence": "low"}
+    if status_fields:
+        merged_status_fields.update(status_fields)
+    merged_attributes = {"bootstrap-placeholder": "true"}
+    if attributes:
+        merged_attributes.update(attributes)
+    return _create_bootstrap_node_tool(
+        file_path=file_path,
+        title=title,
+        annotation=annotation,
+        role="evidence-placeholder",
+        node_type="evidence",
+        parent_node_id=parent_node_id,
+        link_type=link_type,
+        status_fields=merged_status_fields,
+        attributes=merged_attributes,
+    )
+
+
+@mcp.tool()
+def create_defeater(
+    title: str,
+    annotation: str | None = None,
+    file_path: str | None = None,
+    parent_node_id: str | None = None,
+    link_type: str | None = "defeats",
+    status_fields: dict[str, Any] | None = None,
+    attributes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return _create_bootstrap_node_tool(
+        file_path=file_path,
+        title=title,
+        annotation=annotation,
+        role="defeater",
+        node_type="defeater",
+        parent_node_id=parent_node_id,
+        link_type=link_type,
+        status_fields=status_fields,
+        attributes=attributes,
+    )
+
+
+@mcp.tool()
+def create_link(
+    source_node_id: str,
+    target_node_id: str,
+    link_type: str = "supports",
+    file_path: str | None = None,
+) -> dict[str, Any]:
+    file_path = _resolve_file_path(file_path)
+    create_backup(file_path)
+    tree, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+
+    if source_node_id not in graph:
+        raise ValueError(f"Unknown node_id: {source_node_id}")
+    if target_node_id not in graph:
+        raise ValueError(f"Unknown node_id: {target_node_id}")
+
+    link = _ensure_link_exists(root, _unique_link_reference(_existing_ids(root, "link"), source_node_id, target_node_id, link_type), _link_type_code(link_type), source_node_id, target_node_id)
+    tree.write(str(file_path), encoding="utf-8", xml_declaration=True)
+
+    return {
+        "file_path": str(file_path),
+        "status": "written",
+        "link_reference": _normalize_text(link.attrib.get("reference")),
+        "source_node_id": source_node_id,
+        "target_node_id": target_node_id,
+        "link_type": _normalize_text(link_type),
+    }
+
+
+@mcp.tool()
+def instantiate_pattern(
+    pattern_name: str,
+    file_path: str | None = None,
+    output_path: str | None = None,
+    system_name: str | None = None,
+    system_context: str | None = None,
+    strategy: str | None = None,
+) -> dict[str, Any]:
+    destination = _resolve_file_path(file_path or output_path) if (file_path or output_path) else _bootstrap_destination_path(None)
+    destination = Path(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+
+    if not destination.exists():
+        root = _bootstrap_case_root(f"{system_name or 'Bootstrap'} assurance case")
+        ET.ElementTree(root).write(str(destination), encoding="utf-8", xml_declaration=True)
+
+    create_backup(str(destination))
+    tree, root = _load_tree(str(destination))
+    graph, _ = _build_graph(root)
+
+    rendered = _render_bootstrap_pattern(
+        pattern_name,
+        system_name=system_name or "the system",
+        system_context=system_context or _normalize_text(get_system_context()),
+        strategy=strategy or _bootstrap_default_strategy(pattern_name),
+    )
+    created_node_ids = _materialize_pattern_branch(
+        root,
+        rendered["root"],
+        system_name=system_name or "the system",
+        system_context=system_context or _normalize_text(get_system_context()),
+        strategy=strategy or _bootstrap_default_strategy(pattern_name),
+    )
+
+    tree.write(str(destination), encoding="utf-8", xml_declaration=True)
+    active_path = _remember_active_axml_path(destination)
+    SHARED_AGENT_CONTEXT["active_case_path"] = active_path
+    if system_context:
+        SHARED_AGENT_CONTEXT["system_brief"] = _normalize_text(system_context)
+
+    return {
+        "file_path": active_path,
+        "status": "written",
+        "pattern_name": pattern_name,
+        "created_node_ids": created_node_ids,
+        "node_count": sum(1 for _, data in graph.nodes(data=True) if data.get("tag") == "node"),
+        "link_count": len(_iter_link_edges(graph)),
+    }
+
+
+@mcp.tool()
+def find_unresolved_gaps(file_path: str | None = None) -> dict[str, Any]:
+    file_path = _resolve_file_path(file_path)
+    _, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+    gaps = _find_unresolved_gaps(graph)
+    return {
+        "file_path": file_path,
+        "count": len(gaps),
+        "gaps": gaps,
+    }
+
+
+@mcp.tool()
+def validate_case_structure(file_path: str | None = None) -> dict[str, Any]:
+    file_path = _resolve_file_path(file_path)
+    _, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+    schema = load_schema_metadata()
+
+    issues: list[str] = []
+    nodes = root.find("nodes")
+    links = root.find("links")
+    if nodes is None:
+        issues.append("missing nodes container")
+    if links is None:
+        issues.append("missing links container")
+
+    for node_id, data in graph.nodes(data=True):
+        if data.get("tag") != "node":
+            continue
+        node_type = _normalize_text(data.get("type"))
+        if node_type and node_type not in schema.get("node_types", {}):
+            issues.append(f"unknown node type: {node_type} ({node_id})")
+        for key in (data.get("status_fields") or {}):
+            if key not in schema.get("status_fields", {}):
+                issues.append(f"unknown status field: {key} ({node_id})")
+
+    if not any(_normalize_text(data.get("type")) == "claim" for _, data in graph.nodes(data=True)):
+        issues.append("no claim nodes found")
+
+    for source, target, data in graph.edges(data=True):
+        if data.get("edge_kind") != "link":
+            continue
+        if source not in graph or target not in graph:
+            issues.append(f"invalid link endpoint: {source} -> {target}")
+
+    return {
+        "file_path": file_path,
+        "valid": not issues,
+        "issues": issues,
+        "node_count": sum(1 for _, data in graph.nodes(data=True) if data.get("tag") == "node"),
+        "link_count": len(_iter_link_edges(graph)),
+    }
+
+
+@mcp.tool()
+def generate_case_summary(file_path: str | None = None) -> dict[str, Any]:
+    file_path = _resolve_file_path(file_path)
+    _, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+    roots = get_root_claims(file_path=file_path)["root_claims"]
+    gaps = _find_unresolved_gaps(graph)
+    summary = _bootstrap_case_summary(graph, roots, gaps)
+    return {
+        "file_path": file_path,
+        "summary": summary,
+        "root_claims": roots,
+        "gaps": gaps,
+    }
 
 
 @mcp.tool()

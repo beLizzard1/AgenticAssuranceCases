@@ -100,6 +100,36 @@ class AsceParserReconstructionTests(unittest.TestCase):
             self.assertEqual(len(children["children"]), 1)
             self.assertEqual(children["children"][0]["id"], "N2")
 
+    def test_bootstrap_case_creation_and_validation(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            case_path = Path(tmpdir) / "bootstrap.axml"
+
+            result = self.module.create_assurance_case(
+                output_path=str(case_path),
+                title="Demo bootstrap case",
+                template_name="generic",
+                system_name="Demo System",
+                system_context="Demo operating context",
+                strategy="hybrid",
+            )
+
+            self.assertEqual(result["status"], "written")
+            self.assertTrue(Path(result["file_path"]).exists())
+
+            validation = self.module.validate_case_structure(str(case_path))
+            self.assertTrue(validation["valid"])
+            self.assertGreaterEqual(validation["node_count"], 5)
+
+            roots = self.module.get_root_claims(str(case_path))
+            self.assertEqual(roots["count"], 1)
+            self.assertIn("Demo System", roots["root_claims"][0]["title"])
+
+            gaps = self.module.find_unresolved_gaps(str(case_path))
+            self.assertGreaterEqual(gaps["count"], 1)
+
+            summary = self.module.generate_case_summary(str(case_path))
+            self.assertIn("Bootstrap summary", summary["summary"])
+
 
 if __name__ == "__main__":
     unittest.main()
