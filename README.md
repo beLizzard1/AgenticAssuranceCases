@@ -1,11 +1,13 @@
 # Agentic Assurance Cases
 
-This repository contains an AI-driven environment for evaluating Claim-Argument-Evidence (CAE) assurance cases using the Helping Hand notation. It is built natively for [OpenCode](https://opencode.ai/) and utilizes the Model Context Protocol (MCP).
+This repository contains an OpenCode-based environment for evaluating Claim-Argument-Evidence (CAE) assurance cases using the Helping Hand notation. It uses a local Model Context Protocol (MCP) server to parse and inspect Adelard ASCE `.axml` files as structured graphs instead of raw XML.
 
 ## Features
-* **Assurance Evaluator Agent:** A primary OpenCode agent that routes claims to specific justification strategies.
-* **Specialized Subagents:** Handlers for Evidence Incorporation, Calculation, Decomposition, Substitution, and Concretion.
-* **ASCE Parser MCP Server:** A custom tool that allows the agents to ingest and map `.axml` network files efficiently.
+* **Assurance Evaluator Agent:** The primary agent that routes claims to the right justification strategy.
+* **Specialized Assurance Subagents:** Evidence Incorporation, Calculation, Decomposition, Substitution, and Concretion.
+* **Adversarial Evaluator Agent:** A red-team pass with rebutting, undercutting, and undermining defeater strategies.
+* **ASCE Parser MCP Server:** Local tools for parsing `.axml`, fetching neighborhood context, and writing targeted updates back to a case.
+* **Schema-Aware Parsing:** The parser uses `schemas/ASCAD 2.0.xml` as the source of truth for node, link, and status-field metadata.
 
 ## Installation & Setup
 
