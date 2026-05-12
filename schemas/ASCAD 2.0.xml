@@ -1,0 +1,1057 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<asceschema>
+	<name>ASCAD</name>
+	<author>Adelard</author>
+    <version>2.0</version>
+	<requiresasceversion>5.1.0</requiresasceversion>
+    <description>The ASCAD definition that includes claims, arguments and evidence, simple status fields and basic structure checking. It also includes defeaters, sub-cases, new link types and colours for schema elements.
+		This schema should not be modified without due consideration to existing content that has been created in this schema. The ASCAD schema is copyright Adelard 2022.
+	</description>
+	<behaviours>
+		<canmultilink>False</canmultilink>
+		<canreflexlink>False</canreflexlink>
+	</behaviours>
+	<nodetypes>
+		<!--claim-->
+		<nodetype>
+			<key>claim</key>
+			<displaytext>Claim</displaytext>
+			<baseshape>0</baseshape>
+			<basecolour>#29A7D9</basecolour>
+			<defaultlinktype>1</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>1</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+		<!--argument-->
+		<nodetype>
+			<key>argument</key>
+			<displaytext>Argument</displaytext>
+			<baseshape>2</baseshape>
+			<basecolour>#68BF50</basecolour>
+			<defaultlinktype>2</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>1</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+		<!--evidence-->
+		<nodetype>
+			<key>evidence</key>
+			<displaytext>Evidence</displaytext>
+			<baseshape>1</baseshape>
+			<basecolour>#6446A6</basecolour>
+			<defaultlinktype>3</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>1</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+		<!--other-->
+		<nodetype>
+			<key>other</key>
+			<displaytext>Other</displaytext>
+			<baseshape>8</baseshape>
+			<basecolour>#a0a0a0</basecolour>
+			<defaultlinktype>2</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0.1</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>0.9</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+		<!--caption-->
+		<nodetype>
+			<key>caption</key>
+			<displaytext>Caption</displaytext>
+			<baseshape>1</baseshape>
+			<basecolour>#808080</basecolour>
+			<defaultlinktype>2</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>1</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+		<!--side-claim-->
+		<nodetype>
+			<key>side-claim</key>
+			<displaytext>Side-claim</displaytext>
+			<baseshape>0</baseshape>
+			<basecolour>#F29D35</basecolour>
+			<defaultlinktype>4</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>1</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+		<!--sub-case-->
+		<nodetype>
+			<key>subcase</key>
+			<displaytext>Sub-case</displaytext>
+			<baseshape>1</baseshape>
+			<basecolour>#6446A6</basecolour>
+			<defaultlinktype>3</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>1</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+		<!--defeater-->
+		<nodetype>
+			<key>defeater</key>
+			<displaytext>Defeater</displaytext>
+			<baseshape>0</baseshape>
+			<basecolour>#F25781</basecolour>
+			<defaultlinktype>5</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0.05</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>1</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+		<!--comment-->
+		<nodetype>
+			<key>comment</key>
+			<displaytext>Comment</displaytext>
+			<baseshape>81</baseshape>
+			<basecolour>#29A7D9</basecolour>
+			<defaultlinktype>7</defaultlinktype>
+			<aspectratio>0</aspectratio>
+			<hotspots>
+				<hotspot>
+					<key>north</key>
+					<x>0.5</x>
+					<y>0</y>
+				</hotspot>
+				<hotspot>
+					<key>east</key>
+					<x>1</x>
+					<y>0.5</y>
+				</hotspot>
+				<hotspot>
+					<key>south</key>
+					<x>0.5</x>
+					<y>1</y>
+				</hotspot>
+				<hotspot>
+					<key>west</key>
+					<x>0</x>
+					<y>0.5</y>
+				</hotspot>
+			</hotspots>
+		</nodetype>
+	</nodetypes>
+	<linktypes>
+		<!--is subclaim of-->
+		<linktype>
+			<key>issubclaimof</key>
+			<reversed>False</reversed>
+			<displaytextforwards>Is a subclaim of</displaytextforwards>
+			<displaytextreversed>Has subclaim</displaytextreversed>
+			<colour>#29A7D9</colour>
+			<arrowheadstart>0</arrowheadstart>
+			<arrowheadmid>0</arrowheadmid>
+			<arrowheadend>7</arrowheadend>
+		</linktype>
+		<!--supports-->
+		<linktype>
+			<key>supports</key>
+			<reversed>False</reversed>
+			<displaytextforwards>Supports</displaytextforwards>
+			<displaytextreversed>Has support</displaytextreversed>
+			<colour>#68BF50</colour>
+			<arrowheadstart>0</arrowheadstart>
+			<arrowheadmid>0</arrowheadmid>
+			<arrowheadend>7</arrowheadend>
+		</linktype>
+		<!--is evidence for-->
+		<linktype>
+			<key>isevidencefor</key>
+			<reversed>False</reversed>
+			<displaytextforwards>Is evidence for</displaytextforwards>
+			<displaytextreversed>Has evidence</displaytextreversed>
+			<colour>#6446A6</colour>
+			<arrowheadstart>0</arrowheadstart>
+			<arrowheadmid>0</arrowheadmid>
+			<arrowheadend>7</arrowheadend>
+		</linktype>
+		<!--is a side-claim of-->
+		<linktype>
+			<key>issideclaimof</key>
+			<reversed>False</reversed>
+			<displaytextforwards>Is a side-claim of</displaytextforwards>
+			<displaytextreversed>Has side-claim</displaytextreversed>
+			<colour>#F29D35</colour>
+			<arrowheadstart>0</arrowheadstart>
+			<arrowheadmid>0</arrowheadmid>
+			<arrowheadend>7</arrowheadend>
+		</linktype>
+		<!--defeats-->
+		<linktype>
+			<key>defeats</key>
+			<reversed>False</reversed>
+			<displaytextforwards>Defeats</displaytextforwards>
+			<displaytextreversed>Has defeater</displaytextreversed>
+			<colour>#F25781</colour>
+			<arrowheadstart>0</arrowheadstart>
+			<arrowheadmid>0</arrowheadmid>
+			<arrowheadend>7</arrowheadend>
+		</linktype>
+		<!--is a subdefeater of-->
+		<linktype>
+			<key>issubdefeaterof</key>
+			<reversed>False</reversed>
+			<displaytextforwards>Is a subdefeater of</displaytextforwards>
+			<displaytextreversed>Has subdefeater</displaytextreversed>
+			<colour>#808080</colour>
+			<arrowheadstart>0</arrowheadstart>
+			<arrowheadmid>0</arrowheadmid>
+			<arrowheadend>7</arrowheadend>
+		</linktype>
+		<!--comments on-->
+		<linktype>
+			<key>commentson</key>
+			<reversed>False</reversed>
+			<displaytextforwards>Comments on</displaytextforwards>
+			<displaytextreversed>Is commented by</displaytextreversed>
+			<colour>#808080</colour>
+			<arrowheadstart>0</arrowheadstart>
+			<arrowheadmid>0</arrowheadmid>
+			<arrowheadend>7</arrowheadend>
+		</linktype>
+	</linktypes>
+	<nodestatusfields>
+		<statusfield>
+			<key>addressed</key>
+			<displaytext>Addressed</displaytext>
+			<datatype>0</datatype>
+			<default>False</default>
+			<enumlist></enumlist>
+			<constraintotypes>8,9</constraintotypes>
+		</statusfield>
+		<statusfield>
+			<key>annotation</key>
+			<displaytext>Annotation</displaytext>
+			<datatype>1</datatype>
+			<default></default>
+			<enumlist></enumlist>
+		</statusfield>
+		<statusfield>
+			<key>audited</key>
+			<displaytext>Audited</displaytext>
+			<datatype>1</datatype>
+			<default></default>
+			<enumlist></enumlist>
+		</statusfield>
+		<statusfield>
+			<key>completed</key>
+			<displaytext>Completed</displaytext>
+			<datatype>0</datatype>
+			<default>False</default>
+			<enumlist></enumlist>
+		</statusfield>
+		<statusfield>
+			<key>hasexternalreference</key>
+			<displaytext>Has External Reference</displaytext>
+			<datatype>0</datatype>
+			<default>False</default>
+			<enumlist></enumlist>
+		</statusfield>
+		<statusfield>
+			<key>confidence</key>
+			<displaytext>Confidence</displaytext>
+			<datatype>1</datatype>
+			<default>Off</default>
+			<enumlist>Off,Low,Medium,High</enumlist>
+		</statusfield>
+		<statusfield>
+			<key>spectrum1</key>
+			<displaytext>Spectrum 1</displaytext>
+			<datatype>1</datatype>
+			<default>Off</default>
+			<enumlist>Off,Silver,Grey,Rose,Orange,Yellow,Green,Lime,Blue,Violet</enumlist>
+		</statusfield>
+		<statusfield>
+			<key>spectrum2</key>
+			<displaytext>Spectrum 2</displaytext>
+			<datatype>1</datatype>
+			<default>Off</default>
+			<enumlist>Off,Silver,Grey,Rose,Orange,Yellow,Green,Lime,Blue,Violet</enumlist>
+		</statusfield>
+		<statusfield>
+			<key>continues</key>
+			<displaytext>Continues</displaytext>
+			<datatype>1</datatype>
+			<default>Off</default>
+			<enumlist>Off,Below,Above</enumlist>
+		</statusfield>
+	</nodestatusfields>
+	<nodedisplayrules>
+		<displayrule>
+			<key>default</key>
+			<displaytext>Default</displaytext>
+			<xsl-rule>
+				<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+					<xsl:template match="/">
+						<decorators>
+							<decorator>
+								<left>0</left>
+								<top>0</top>
+								<height>1</height>
+								<width>1</width>
+								<fill-colour>#ffffff</fill-colour>
+
+								<!-- claim -->
+								<xsl:if test="//type/text() = '1'">
+									<draw-colour>#29A7D9</draw-colour>
+									<shape>0</shape>
+								</xsl:if>
+
+								<!-- argument -->
+								<xsl:if test="//type/text() = '2'">
+									<draw-colour>#68BF50</draw-colour>
+									<shape>2</shape>
+								</xsl:if>
+
+								<!-- evidence -->
+								<xsl:if test="//type/text() = '3'">
+									<draw-colour>#6446A6</draw-colour>
+									<shape>1</shape>
+								</xsl:if>
+
+								<!-- other -->
+								<xsl:if test="//type/text() = '4'">
+									<draw-colour>#c0c0c0</draw-colour>
+									<shape>8</shape>
+								</xsl:if>
+
+								<!-- caption -->
+								<xsl:if test="//type/text() = '5'">
+									<transparent>True</transparent>
+									<draw-style>5</draw-style>
+									<shape>1</shape>
+								</xsl:if>
+
+								<!-- side-claim -->
+								<xsl:if test="//type/text() = '6'">
+									<draw-colour>#F29D35</draw-colour>
+									<shape>0</shape>
+								</xsl:if>
+
+								<!-- subcase -->
+								<xsl:if test="//type/text() = '7'">
+									<draw-colour>#6446A6</draw-colour>
+									<shape>1</shape>
+								</xsl:if>
+
+								<!-- defeater -->
+								<xsl:if test="//type/text() = '8'">
+									<draw-colour>#F25781</draw-colour>
+									<shape>0</shape>
+								</xsl:if>
+
+								<!-- comment -->
+								<xsl:if test="//type/text() = '9'">
+									<draw-colour>#808080</draw-colour>
+									<shape>81</shape>
+								</xsl:if>
+							</decorator>
+
+							<!--extra border for subcase-->
+							<xsl:if test="//type/text() = '7'">
+								<decorator>
+									<left>0.02</left>
+									<top>0.03</top>
+									<height>0.93</height>
+									<width>0.96</width>
+									<fill-colour>#ffffff</fill-colour>
+									<draw-colour>#6446A6</draw-colour>
+									<shape>1</shape>
+								</decorator>
+							</xsl:if>
+						</decorators>
+					</xsl:template>
+				</xsl:stylesheet>
+			</xsl-rule>
+		</displayrule>
+		<displayrule>
+			<key>trafficlight-confidence</key>
+			<displaytext>Background traffic light based on node confidence</displaytext>
+			<xsl-rule>
+				<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+					<xsl:template match="/">
+						<decorators>
+							<xsl:if test="//status-fields/status-field[@name='confidence']/text() != 'Off'">
+								<decorator>
+									<!-- shape related to node type -->
+									<xsl:if test="//type/text() = '1'">
+										<left>0</left>
+										<top>0</top>
+										<height>1</height>
+										<width>1</width>
+										<shape>0</shape>
+										<draw-colour>#29A7D9</draw-colour>
+									</xsl:if>
+									<xsl:if test="//type/text() = '2'">
+										<left>0</left>
+										<top>0</top>
+										<height>1</height>
+										<width>1</width>
+										<shape>2</shape>
+										<draw-colour>#68BF50</draw-colour>
+									</xsl:if>
+									<xsl:if test="//type/text() = '3'">
+										<left>0</left>
+										<top>0</top>
+										<height>1</height>
+										<width>1</width>
+										<shape>1</shape>
+										<draw-colour>#6446A6</draw-colour>
+									</xsl:if>
+									<xsl:if test="//type/text() = '4'">
+										<left>0</left>
+										<top>0</top>
+										<height>1</height>
+										<width>1</width>
+										<shape>8</shape>
+										<draw-colour>#c0c0c0</draw-colour>
+									</xsl:if>
+									<xsl:if test="//type/text() = '5'">
+										<left>0</left>
+										<top>0</top>
+										<height>1</height>
+										<width>1</width>
+										<shape>1</shape>
+										<draw-colour>#c0c0c0</draw-colour>
+									</xsl:if>
+									<xsl:if test="//type/text() = '6'">
+										<left>0</left>
+										<top>0</top>
+										<height>1</height>
+										<width>1</width>
+										<shape>0</shape>
+										<draw-colour>#F29D35</draw-colour>
+									</xsl:if>
+									<xsl:if test="//type/text() = '7'">
+										<left>0.02</left>
+										<top>0.03</top>
+										<height>0.93</height>
+										<width>0.96</width>
+										<draw-colour>#6446A6</draw-colour>
+										<shape>1</shape>
+									</xsl:if>
+									<xsl:if test="//type/text() = '8'">
+										<left>0</left>
+										<top>0</top>
+										<height>1</height>
+										<width>1</width>
+										<shape>0</shape>
+										<draw-colour>#F25781</draw-colour>
+									</xsl:if>
+									<xsl:if test="//type/text() = '9'">
+										<left>0</left>
+										<top>0</top>
+										<height>1</height>
+										<width>1</width>
+										<shape>81</shape>
+										<draw-colour>#808080</draw-colour>
+									</xsl:if>
+									<fill-colour>
+										<xsl:if test="//status-fields/status-field[@name='confidence']/text() = 'Low'">#FAB7A5</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='confidence']/text() = 'Medium'">#F0E199</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='confidence']/text() = 'High'">#BBF0AF</xsl:if>
+									</fill-colour>
+								</decorator>
+							</xsl:if>
+						</decorators>
+					</xsl:template>
+				</xsl:stylesheet>
+			</xsl-rule>
+		</displayrule>
+		<displayrule>
+			<key>has-external-reference</key>
+			<displaytext>Has external reference shown as grey decorator</displaytext>
+			<xsl-rule>
+				<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+					<xsl:template match="/">
+						<decorators>
+							<xsl:if test="//status-fields/status-field[@name='hasexternalreference']/text() = 'True'">
+								<decorator>
+									<left>0</left>
+									<top>0.9</top>
+									<height>0.1</height>
+									<width>0.2</width>
+									<shape>1</shape>
+									<draw-colour>#000000</draw-colour>
+									<fill-colour>#c0c0c0</fill-colour>
+								</decorator>
+							</xsl:if>
+						</decorators>
+					</xsl:template>
+				</xsl:stylesheet>
+			</xsl-rule>
+		</displayrule>
+		<displayrule>
+			<key>continuation-decorators</key>
+			<displaytext>Continuation decorators</displaytext>
+			<xsl-rule>
+				<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+					<xsl:template match="/">
+						<decorators>
+							<xsl:if test="//status-fields/status-field[@name='continues']/text() != 'Off'">
+								<decorator>
+									<left>0.4</left>
+									<width>0.2</width>
+									<height>0.3</height>
+									<xsl:if test="//status-fields/status-field[@name='continues']/text() = 'Above'">
+										<top>-0.33</top>
+										<shape>4</shape>
+									</xsl:if>
+									<xsl:if test="//status-fields/status-field[@name='continues']/text() = 'Below'">
+										<top>1.03</top>
+                                    <shape>5</shape>
+									</xsl:if>
+									<draw-colour>#000000</draw-colour>
+									<transparent>True</transparent>
+									<draw-style>1</draw-style>
+								</decorator>
+							</xsl:if>
+						</decorators>
+					</xsl:template>
+				</xsl:stylesheet>
+			</xsl-rule>
+		</displayrule>
+		<displayrule>
+			<key>spectrum-decorators</key>
+			<displaytext>Spectrum colour decorators</displaytext>
+			<xsl-rule>
+				<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+					<xsl:template match="/">
+						<decorators>
+							<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() != 'Off'">
+								<decorator>
+									<left>0.25</left>
+									<top>0.6</top>
+									<height>0.15</height>
+									<width>0.15</width>
+									<shape>13</shape>
+									<draw-colour>#000000</draw-colour>
+									<fill-colour>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Green'">#C4FCC2</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Rose'">#FEB1B7</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Blue'">#CAFDFF</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Violet'">#EEC1FD</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Yellow'">#FEFAA9</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Silver'">#EFEFEF</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Grey'">#AFAFAF</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Lime'">#CCFF33</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum1']/text() = 'Orange'">#FFCC66</xsl:if>
+									</fill-colour>
+								</decorator>
+							</xsl:if>
+							<!-- spectrum 2 display decorator -->
+							<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() != 'Off'">
+								<decorator>
+									<left>0.6</left>
+									<top>0.25</top>
+									<height>0.15</height>
+									<width>0.15</width>
+									<shape>13</shape>
+									<draw-colour>#000000</draw-colour>
+									<rotation>2</rotation>
+									<fill-colour>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Green'">#C4FCC2</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Rose'">#FEB1B7</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Blue'">#CAFDFF</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Violet'">#EEC1FD</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Yellow'">#FEFAA9</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Silver'">#EFEFEF</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Grey'">#AFAFAF</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Lime'">#CCFF33</xsl:if>
+										<xsl:if test="//status-fields/status-field[@name='spectrum2']/text() = 'Orange'">#FFCC66</xsl:if>
+									</fill-colour>
+								</decorator>
+							</xsl:if>
+						</decorators>
+					</xsl:template>
+				</xsl:stylesheet>
+			</xsl-rule>
+		</displayrule>
+		<displayrule>
+			<key>nodeid-title</key>
+			<displaytext>Node Id and title</displaytext>
+			<xsl-rule>
+				<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+					<xsl:template match="/">
+						<decorators>
+							<decorator>
+								<xsl:choose>
+									<xsl:when test="//type/text() = '9'">
+										<left>0.1</left>
+										<top>0.17</top>
+										<height>0.73</height>
+										<width>0.8</width>
+									</xsl:when>
+									<xsl:otherwise>
+										<left>0.1</left>
+										<top>0.1</top>
+										<height>0.8</height>
+										<width>0.8</width>
+									</xsl:otherwise>
+								</xsl:choose>
+								<transparent>True</transparent>
+								<draw-style>5</draw-style>
+								<text>
+									<xsl:value-of select="//node/user-id/text()"/>
+									<xsl:if test="(//node/user-id/text() !='') and (//node/user-title/text() !='')">
+										<xsl:text><![CDATA[
+]]></xsl:text>
+									</xsl:if>
+									<xsl:value-of select="//node/user-title/text() "/>
+								</text>
+							</decorator>
+						</decorators>
+					</xsl:template>
+				</xsl:stylesheet>
+			</xsl-rule>
+		</displayrule>
+		<displayrule>
+			<key>has-been-addressed</key>
+			<displaytext>Has been addressed</displaytext>
+			<xsl-rule>
+				<xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+					<xsl:template match="/">
+						<decorators>
+							<!-- addressed checkbox for defeaters-->
+							<xsl:if test="(//type/text() = '8') and (//status-fields/status-field[@name='addressed']/text() = 'True')">
+								<decorator>
+									<left>0.8</left>
+									<top>0.8</top>
+									<height>0.1</height>
+									<width>0.1</width>
+									<shape>82</shape>
+									<draw-colour>#F25781</draw-colour>
+									<fill-colour>#FFFFFF</fill-colour>
+								</decorator>
+							</xsl:if>
+
+							<!-- addressed checkbox for comments-->
+							<xsl:if test="(//type/text() = '9') and (//status-fields/status-field[@name='addressed']/text() = 'True')">
+								<decorator>
+									<left>0.88</left>
+									<top>0.88</top>
+									<height>0.1</height>
+									<width>0.1</width>
+									<shape>82</shape>
+									<draw-colour>#808080</draw-colour>
+									<fill-colour>#FFFFFF</fill-colour>
+								</decorator>
+							</xsl:if>
+						</decorators>
+					</xsl:template>
+				</xsl:stylesheet>
+			</xsl-rule>
+		</displayrule>
+	</nodedisplayrules>
+	<checkrules>
+		<checkrule>
+			<key>multiple_top-level_claims</key>
+			<displaytext>More than one top-level claim is detected</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes</xpathselectexpression>
+			<xpathcheckexpression>node[type="1"][not(links[@type="outlinks"]/link)][2]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>claims_should_support_arguments_only</key>
+			<displaytext>Claim should support argument nodes only</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="1"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/node[type!="2"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>claim_must_be_supported_by_argument</key>
+			<displaytext>Claim must be supported by an argument</displaytext>
+			<warningtype>3</warningtype>
+			<xpathselectexpression>/nodes/node[type="1"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="inlinks"]/link/node[type="2"]</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>claim_may_be_supported_by_one_argument_only</key>
+			<displaytext>Claim may be supported by one argument only</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="1"]</xpathselectexpression>
+			<xpathcheckexpression>(links[@type="inlinks"]/link/node[type="2"])[2]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>top_level_argument_node_not_allowed</key>
+			<displaytext>Top-level argument node is not allowed</displaytext>
+			<warningtype>4</warningtype>
+			<xpathselectexpression>/nodes/node[type="2"]</xpathselectexpression>
+			<xpathcheckexpression>(links[@type="outlinks"]/link/*)[1]</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>argument_may_only_support_claim_sideclaim_defeater</key>
+			<displaytext>Argument may only support a claim, a side-claim or a defeater</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="2"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/node[type!="1" and type!="6" and type!="8"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>argument_must_be_supported_by_at_least_one_claim_or_subcase_or_defeater_or_evidence</key>
+			<displaytext>Argument must be supported by at least one claim or sub-case or defeater or evidence node</displaytext>
+			<warningtype>4</warningtype>
+			<xpathselectexpression>/nodes/node[type="2"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="inlinks"]/link[type!="5"]/node[type="1" or type="3" or type="7" or type="8"]</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>evidence_nodes_must_support_other_nodes</key>
+			<displaytext>Floating evidences are not allowed: evidence nodes must support at least one argument</displaytext>
+			<warningtype>3</warningtype>
+			<xpathselectexpression>/nodes/node[type="3"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/*</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>evidence_nodes_can_only_support_arguments</key>
+			<displaytext>Evidence nodes may only support argument nodes</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="3"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/node[type!="2"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>subcase_nodes_must_support_other_nodes</key>
+			<displaytext>Floating sub-cases are not allowed: sub-case nodes must support at least one argument</displaytext>
+			<warningtype>3</warningtype>
+			<xpathselectexpression>/nodes/node[type="7"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/*</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>subcase_nodes_can_only_support_arguments</key>
+			<displaytext>Sub-case nodes may only support argument nodes</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="7"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/node[type!="2"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>sideclaim_nodes_must_support_other_nodes</key>
+			<displaytext>Floating side-claims are not allowed: side-claim nodes must support at least one argument</displaytext>
+			<warningtype>4</warningtype>
+			<xpathselectexpression>/nodes/node[type="6"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/*</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>sideclaim_nodes_can_only_support_arguments</key>
+			<displaytext>Side-claim nodes may only support argument nodes</displaytext>
+			<warningtype>3</warningtype>
+			<xpathselectexpression>/nodes/node[type="6"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/node[type!="2"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>sideclaim_should_be_supported_by_argument</key>
+			<displaytext>Side-claim nodes should be supported by an argument</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="6"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="inlinks"]/link/node[type="2"]</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>sideclaim_may_be_supported_by_one_argument_only</key>
+			<displaytext>Side-claim nodes may be supported by one argument only</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="6"]</xpathselectexpression>
+			<xpathcheckexpression>(links[@type="inlinks"]/link/node[type="2"])[2]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>top_level_defeater_node_not_allowed</key>
+			<displaytext>Floating defeaters are not allowed: defeater nodes must be attached to other nodes</displaytext>
+			<warningtype>3</warningtype>
+			<xpathselectexpression>/nodes/node[type="8"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/*</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>defeaters_cannot_be_attached_to_comments_or_captions</key>
+			<displaytext>Defeaters can be attached to any node, apart from comments or captions</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="8"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/node[type="5" or type="9"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>defeater_nodes_may_be_supported_by_one_argument_only</key>
+			<displaytext>Defeater nodes may be supported by one argument only</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="8"]</xpathselectexpression>
+			<xpathcheckexpression>(links[@type="inlinks"]/link/node[type="2"])[2]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>comment_nodes_must_point_to_other_nodes</key>
+			<displaytext>Comment nodes are expected to point to another node</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="9"]</xpathselectexpression>
+			<xpathcheckexpression>links[@type="outlinks"]/link/*</xpathcheckexpression>
+			<xpathcheckmustbe>2</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>all_nodes_should_have_status_completed</key>
+			<displaytext>All nodes should eventually have status completed</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node</xpathselectexpression>
+			<xpathcheckexpression>status-fields/status-field[@name='completed' and text() = 'False' ]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_from_claim_to_be_is_sub_claim_of</key>
+			<displaytext>The outbound links from claim are expected to be of Is a subclaim of type</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="1"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="1"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_from_argument_to_be_support</key>
+			<displaytext>The outbound link from argument is expected to be of Support type</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="2"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="2"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>only_one_out_link_from_argument</key>
+			<displaytext>Only one outbound link is allowed from the argument node</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="2"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>(link)[2]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_from_evidence_to_be_is_evidence_for</key>
+			<displaytext>The outbound links from evidence are expected to be of Is evidence for type</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="3"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="3"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_from_sub_cases_to_be_is_evidence_for</key>
+			<displaytext>The outbound links from sub-cases are expected to be of Is evidence for type</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="7"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="3"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_from_side_claim_to_be_is_a_side_claim_of</key>
+			<displaytext>The outbound link from side-claim is expected to be of Is a side-claim of type</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="6"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="4"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>only_one_out_link_from_side_claim</key>
+			<displaytext>Each side-claim may only have one outbound link</displaytext>
+			<warningtype>2</warningtype>
+			<xpathselectexpression>/nodes/node[type="6"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>(link)[2]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_from_defeaters_to_argument_to_be_defeats_or_is_a_sub_defeater</key>
+			<displaytext>The outbound links from defeaters to arguments are expected to be of either Defeats or Is a subdefeater of types</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="8"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="5" and type!="6"]/node[type="2"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_from_defeaters_to_defeaters_to_be_defeats_or_supports</key>
+			<displaytext>The outbound links from defeaters to other defeaters are expected to be of either Defeats or Supports types</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="8"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="5" and type!="2"]/node[type="8"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_from_defeaters_to_other_nodes_to_be_defeats</key>
+			<displaytext>The outbound links from defeaters to nodes attacked by them are expected to be of Defeats type</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="8"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="5"]/node[type!="2" and type!="8"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+		<checkrule>
+			<key>out_links_comment_to_be_comments_on</key>
+			<displaytext>The outbound links from comment are expected to be of Comments on type</displaytext>
+			<warningtype>1</warningtype>
+			<xpathselectexpression>/nodes/node[type="9"]/links[@type="outlinks"]</xpathselectexpression>
+			<xpathcheckexpression>link[type!="7"]</xpathcheckexpression>
+			<xpathcheckmustbe>1</xpathcheckmustbe>
+		</checkrule>
+	</checkrules>
+</asceschema>

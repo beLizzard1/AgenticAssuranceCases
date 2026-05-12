@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "asce_tools": {
+      "type": "local",
+      "enabled": true,
+      "command": "python",
+      "args": ["mcp-server/asce_parser.py"]
+    }
+  }
+}

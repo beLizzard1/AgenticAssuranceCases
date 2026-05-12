@@ -1,0 +1,513 @@
+from __future__ import annotations
+
+from functools import lru_cache
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+from typing import Any, Optional
+import xml.etree.ElementTree as ET
+
+import networkx as nx
+from bs4 import BeautifulSoup
+from mcp.server.fastmcp import FastMCP
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+SCHEMA_PATH = REPO_ROOT / "schemas" / "ASCAD 2.0.xml"
+
+MCP_SERVER_NAME = "asce_tools"
+mcp = FastMCP(MCP_SERVER_NAME)
+MCP_FINGERPRINT = "asce_parser_v1.0.3_abc123"
+MODEL_USED = "gpt-5.4-mini"
+
+TITLE_TAGS = ("title", "name", "label")
+ANNOTATION_TAGS = ("annotation", "annotations", "comment", "description", "notes", "html")
+ID_ATTRS = ("id", "xml:id", "guid", "uid", "nodeid", "node_id")
+RELATION_ATTRS = ("source", "target", "from", "to", "ref", "refid", "parent", "child")
+
+TYPE_CODE_MAP = {
+    "1": "claim",
+    "2": "argument",
+    "3": "evidence",
+    "4": "other",
+    "5": "caption",
+    "6": "side-claim",
+    "7": "subcase",
+    "8": "defeater",
+    "9": "comment",
+}
+
+
+def _local_name(tag: str) -> str:
+    if tag.startswith("{"):
+        return tag.rsplit("}", 1)[-1]
+    if ":" in tag:
+        return tag.split(":", 1)[1]
+    return tag
+
+
+def _normalize_text(value: Any) -> str:
+    if value is None:
+        return ""
+    return " ".join(str(value).split())
+
+
+def _strip_html(value: str) -> str:
+    if not value:
+        return ""
+    return BeautifulSoup(value, "html.parser").get_text(" ", strip=True)
+
+
+def _split_refs(value: str) -> list[str]:
+    refs: list[str] = []
+    for chunk in str(value).replace(",", " ").split():
+        item = chunk.strip()
+        if item:
+            refs.append(item)
+    return refs
+
+
+@lru_cache(maxsize=1)
+def load_schema_metadata() -> dict[str, Any]:
+    metadata: dict[str, Any] = {
+        "path": str(SCHEMA_PATH),
+        "exists": SCHEMA_PATH.exists(),
+        "name": None,
+        "version": None,
+        "requires_asce_version": None,
+        "node_types": {},
+        "link_types": {},
+        "status_fields": {},
+    }
+
+    if not SCHEMA_PATH.exists():
+        return metadata
+
+    tree = ET.parse(str(SCHEMA_PATH))
+    root = tree.getroot()
+    metadata["name"] = _normalize_text(root.findtext("name"))
+    metadata["version"] = _normalize_text(root.findtext("version"))
+    metadata["requires_asce_version"] = _normalize_text(root.findtext("requiresasceversion"))
+
+    for nodetype in root.findall("./nodetypes/nodetype"):
+        key = _normalize_text(nodetype.findtext("key"))
+        if not key:
+            continue
+        metadata["node_types"][key] = {
+            "displaytext": _normalize_text(nodetype.findtext("displaytext")),
+            "baseshape": _normalize_text(nodetype.findtext("baseshape")),
+            "basecolour": _normalize_text(nodetype.findtext("basecolour")),
+            "defaultlinktype": _normalize_text(nodetype.findtext("defaultlinktype")),
+            "aspectratio": _normalize_text(nodetype.findtext("aspectratio")),
+        }
+
+    for linktype in root.findall("./linktypes/linktype"):
+        key = _normalize_text(linktype.findtext("key"))
+        if not key:
+            continue
+        metadata["link_types"][key] = {
+            "displaytextforwards": _normalize_text(linktype.findtext("displaytextforwards")),
+            "displaytextreversed": _normalize_text(linktype.findtext("displaytextreversed")),
+            "reversed": _normalize_text(linktype.findtext("reversed")),
+            "colour": _normalize_text(linktype.findtext("colour")),
+        }
+
+    for status_field in root.findall("./nodestatusfields/statusfield"):
+        key = _normalize_text(status_field.findtext("key"))
+        if not key:
+            continue
+        metadata["status_fields"][key] = {
+            "displaytext": _normalize_text(status_field.findtext("displaytext")),
+            "datatype": _normalize_text(status_field.findtext("datatype")),
+            "default": _normalize_text(status_field.findtext("default")),
+            "enumlist": _normalize_text(status_field.findtext("enumlist")),
+        }
+
+    return metadata
+
+
+def _schema_type_name(node: ET.Element) -> str:
+    type_code = _normalize_text(node.attrib.get("type") or node.findtext("type"))
+    if type_code in TYPE_CODE_MAP:
+        return TYPE_CODE_MAP[type_code]
+
+    node_type = _normalize_text(node.attrib.get("nodetype") or node.findtext("nodetype"))
+    if node_type:
+        return node_type
+
+    return _local_name(node.tag)
+
+
+def _element_id(element: ET.Element, path: str) -> str:
+    for attr in ID_ATTRS:
+        value = _normalize_text(element.attrib.get(attr))
+        if value:
+            return value
+    return path
+
+
+def _extract_status_fields(element: ET.Element, schema: dict[str, Any]) -> dict[str, str]:
+    status_fields: dict[str, str] = {}
+
+    for child in list(element):
+        child_tag = _local_name(child.tag).lower()
+        if child_tag not in {"status-fields", "statusfield", "status-field"}:
+            continue
+
+        for status_child in list(child):
+            key = _normalize_text(
+                status_child.attrib.get("name")
+                or status_child.attrib.get("key")
+                or status_child.findtext("key")
+            )
+            value = _normalize_text(" ".join(status_child.itertext()))
+            if key and value:
+                status_fields[key] = value
+
+    for key in schema.get("status_fields", {}):
+        if key in element.attrib:
+            status_fields[key] = _normalize_text(element.attrib.get(key))
+
+    return status_fields
+
+
+def _extract_title(element: ET.Element) -> str:
+    for attr in ("title", "name", "label"):
+        value = _normalize_text(element.attrib.get(attr))
+        if value:
+            return value
+
+    for child in list(element):
+        if _local_name(child.tag).lower() in TITLE_TAGS:
+            value = _normalize_text(" ".join(child.itertext()))
+            if value:
+                return value
+
+    return _normalize_text(element.attrib.get("text") or " ".join(element.itertext()))
+
+
+def _extract_annotation(element: ET.Element) -> str:
+    for child in list(element):
+        if _local_name(child.tag).lower() in ANNOTATION_TAGS:
+            value = _normalize_text(" ".join(child.itertext()))
+            if value:
+                return value
+
+    return _strip_html(_normalize_text(" ".join(element.itertext())))
+
+
+def _build_graph(root: ET.Element) -> tuple[nx.DiGraph, dict[str, ET.Element]]:
+    schema = load_schema_metadata()
+    graph = nx.DiGraph()
+    lookup: dict[str, ET.Element] = {}
+
+    def walk(element: ET.Element, path: str, parent_id: Optional[str] = None) -> None:
+        node_id = _element_id(element, path)
+        lookup[node_id] = element
+
+        attributes = {key: _normalize_text(value) for key, value in element.attrib.items()}
+        status_fields = _extract_status_fields(element, schema)
+        node_type = _schema_type_name(element)
+
+        graph.add_node(
+            node_id,
+            tag=_local_name(element.tag),
+            type=node_type,
+            title=_extract_title(element),
+            annotation=_extract_annotation(element),
+            text=_strip_html(_normalize_text(" ".join(element.itertext()))),
+            attributes=attributes,
+            status_fields=status_fields,
+            path=path,
+        )
+
+        if parent_id is not None:
+            graph.add_edge(parent_id, node_id, relation="contains")
+
+        for attr_name, attr_value in attributes.items():
+            lowered = attr_name.lower()
+            if lowered in RELATION_ATTRS or lowered.endswith("ref") or lowered.endswith("refs"):
+                for ref in _split_refs(attr_value):
+                    if ref and ref != node_id:
+                        graph.add_edge(node_id, ref, relation=attr_name)
+
+        for index, child in enumerate(list(element), start=1):
+            child_path = f"{path}/{_local_name(child.tag)}[{index}]"
+            walk(child, child_path, node_id)
+
+    walk(root, f"/{_local_name(root.tag)}[1]")
+    return graph, lookup
+
+
+def _graph_payload(graph: nx.DiGraph) -> dict[str, Any]:
+    nodes = []
+    for node_id, data in graph.nodes(data=True):
+        nodes.append(
+            {
+                "id": node_id,
+                "tag": data.get("tag"),
+                "type": data.get("type"),
+                "title": data.get("title"),
+                "annotation": data.get("annotation"),
+                "text": data.get("text"),
+                "attributes": data.get("attributes", {}),
+                "status_fields": data.get("status_fields", {}),
+                "path": data.get("path"),
+            }
+        )
+
+    edges = []
+    for source, target, data in graph.edges(data=True):
+        edges.append(
+            {
+                "source": source,
+                "target": target,
+                "relation": data.get("relation"),
+            }
+        )
+
+    return {"nodes": nodes, "edges": edges}
+
+
+def _load_tree(file_path: str | Path) -> tuple[ET.ElementTree, ET.Element]:
+    tree = ET.parse(str(file_path))
+    return tree, tree.getroot()
+
+
+def _find_element(root: ET.Element, node_id: str) -> Optional[ET.Element]:
+    _, lookup = _build_graph(root)
+    return lookup.get(node_id)
+
+
+def _update_text_node(element: ET.Element, candidates: tuple[str, ...], value: str) -> bool:
+    for candidate in candidates:
+        for child in list(element):
+            if _local_name(child.tag).lower() == candidate:
+                child.text = value
+                return True
+
+    for candidate in candidates:
+        if candidate in element.attrib:
+            element.set(candidate, value)
+            return True
+
+    created = ET.SubElement(element, candidates[0])
+    created.text = value
+    return True
+
+
+def _update_status_fields(element: ET.Element, status_fields: dict[str, Any]) -> None:
+    container = None
+    for child in list(element):
+        if _local_name(child.tag).lower() in {"status-fields", "statusfield", "status-field"}:
+            container = child
+            break
+
+    if container is None:
+        container = ET.SubElement(element, "status-fields")
+
+    existing: dict[str, ET.Element] = {}
+    for child in list(container):
+        key = _normalize_text(
+            child.attrib.get("name")
+            or child.attrib.get("key")
+            or child.findtext("key")
+        )
+        if key:
+            existing[key] = child
+
+    for key, value in status_fields.items():
+        text = _normalize_text(value)
+        if key in existing:
+            existing[key].text = text
+            continue
+
+        status_field = ET.SubElement(container, "status-field")
+        status_field.set("name", str(key))
+        status_field.text = text
+
+
+def _input_hash(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _provenance_lines(fingerprint: str, model_used: str, input_hash: str) -> list[str]:
+    return [
+        f"MCP Fingerprint: {fingerprint}",
+        f"Model: {model_used}",
+        f"Timestamp: {datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')}",
+        f"Input Hash: sha256:{input_hash}",
+    ]
+
+
+def _strip_existing_provenance(existing_value: str) -> str:
+    existing_value = _normalize_text(existing_value)
+    if not existing_value:
+        return ""
+
+    prefixes = ("MCP Fingerprint:", "Model:", "Timestamp:", "Input Hash:")
+    kept_lines = []
+    for line in existing_value.splitlines():
+        if line.strip().startswith(prefixes):
+            break
+        kept_lines.append(line)
+
+    return "\n".join(kept_lines).strip()
+
+
+def _annotation_field_value(existing_value: str, fingerprint: str, model_used: str, input_hash: str) -> str:
+    base_value = _strip_existing_provenance(existing_value)
+    provenance = "\n".join(_provenance_lines(fingerprint, model_used, input_hash))
+    if not base_value:
+        return provenance
+    return f"{base_value}\n{provenance}"
+
+
+def _append_annotation_provenance(
+    element: ET.Element,
+    fingerprint: str,
+    model_used: str,
+    input_hash: str,
+) -> None:
+    schema = load_schema_metadata()
+    container = None
+
+    for child in list(element):
+        if _local_name(child.tag).lower() in {"status-fields", "statusfield", "status-field"}:
+            container = child
+            break
+
+    if container is None:
+        container = ET.SubElement(element, "status-fields")
+
+    annotation_field = None
+    for child in list(container):
+        key = _normalize_text(
+            child.attrib.get("name")
+            or child.attrib.get("key")
+            or child.findtext("key")
+        ).lower()
+        if key == "annotation":
+            annotation_field = child
+            break
+
+    if annotation_field is None:
+        annotation_field = ET.SubElement(container, "status-field")
+        annotation_field.set("name", "annotation")
+        annotation_field.set("type", "string")
+
+    current_value = _normalize_text(annotation_field.text)
+    annotation_field.text = _annotation_field_value(current_value, fingerprint, model_used, input_hash)
+
+    # Ensure schema-defined annotation metadata stays discoverable if the file already uses it.
+    if "annotation" in schema.get("status_fields", {}):
+        annotation_field.set("name", "annotation")
+        annotation_field.set("type", annotation_field.attrib.get("type", "string"))
+
+
+@mcp.tool()
+def parse_assurance_case(file_path: str, focus_node_id: str | None = None, radius: int = 2) -> dict[str, Any]:
+    """Parse an AXML assurance case into a schema-aware NetworkX graph."""
+    _, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+
+    payload: dict[str, Any] = {
+        "file_path": str(file_path),
+        "schema": load_schema_metadata(),
+        "node_count": graph.number_of_nodes(),
+        "edge_count": graph.number_of_edges(),
+        "graph": _graph_payload(graph),
+    }
+
+    if focus_node_id:
+        payload["neighborhood"] = get_assurance_neighborhood(file_path, focus_node_id, radius)
+
+    return payload
+
+
+@mcp.tool()
+def get_assurance_neighborhood(file_path: str, node_id: str, radius: int = 2) -> dict[str, Any]:
+    """Return a local subgraph around a node so subagents can see neighborhood context."""
+    _, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+
+    if node_id not in graph:
+        raise ValueError(f"Unknown node_id: {node_id}")
+
+    radius = max(0, int(radius))
+    undirected = graph.to_undirected()
+    nodes_in_scope = set(nx.single_source_shortest_path_length(undirected, node_id, cutoff=radius).keys())
+    subgraph = graph.subgraph(nodes_in_scope).copy()
+
+    return {
+        "center": node_id,
+        "radius": radius,
+        "schema": load_schema_metadata(),
+        "graph": _graph_payload(subgraph),
+    }
+
+
+@mcp.tool()
+def modify_assurance_case(
+    file_path: str,
+    node_id: str,
+    title: str | None = None,
+    annotation: str | None = None,
+    status_fields: dict[str, Any] | None = None,
+    attributes: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Apply targeted updates to an AXML file and persist them in place."""
+    schema = load_schema_metadata()
+    tree, root = _load_tree(file_path)
+    element = _find_element(root, node_id)
+    if element is None:
+        raise ValueError(f"Unknown node_id: {node_id}")
+
+    changed_fields: list[str] = []
+
+    if title is not None:
+        _update_text_node(element, TITLE_TAGS, _normalize_text(title))
+        changed_fields.append("title")
+
+    if annotation is not None:
+        _update_text_node(element, ANNOTATION_TAGS, _normalize_text(annotation))
+        changed_fields.append("annotation")
+
+    if status_fields:
+        known_status_fields = schema.get("status_fields", {})
+        unknown = [key for key in status_fields if key not in known_status_fields]
+        if unknown:
+            raise ValueError(f"Unknown schema status field(s): {', '.join(sorted(unknown))}")
+        _update_status_fields(element, status_fields)
+        changed_fields.append("status_fields")
+
+    if attributes:
+        for key, value in attributes.items():
+            element.set(str(key), _normalize_text(value))
+        changed_fields.append("attributes")
+
+    provenance_input = {
+        "file_path": str(file_path),
+        "node_id": node_id,
+        "title": _normalize_text(title) if title is not None else None,
+        "annotation": _normalize_text(annotation) if annotation is not None else None,
+        "status_fields": {str(key): _normalize_text(value) for key, value in (status_fields or {}).items()} or None,
+        "attributes": {str(key): _normalize_text(value) for key, value in (attributes or {}).items()} or None,
+    }
+    _append_annotation_provenance(element, MCP_FINGERPRINT, MODEL_USED, _input_hash(provenance_input))
+    changed_fields.append("annotation_provenance")
+
+    tree.write(str(file_path), encoding="utf-8", xml_declaration=True)
+
+    return {
+        "file_path": str(file_path),
+        "node_id": node_id,
+        "changed_fields": changed_fields,
+        "status": "written",
+    }
+
+
+if __name__ == "__main__":
+    mcp.run()
