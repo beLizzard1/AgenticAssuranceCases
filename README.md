@@ -80,6 +80,8 @@ graph TD
 3. **Open the repo in OpenCode:**
    - The local MCP server is configured in `opencode.json`.
    - The OpenCode agent files live under `.opencode/agents/`.
+   - The Lex skill is provided via the `extern/lex-uk-law` submodule and exposed to OpenCode through a symlink at `.opencode/skills/lex-uk-law`.
+   - After cloning, run `git submodule update --init --recursive` so the skill source is available.
 
 4. **Run against an `.axml` file:**
    - Use the included sample case in `examples/` or point the agents at your own `.axml` file.
