@@ -3,7 +3,12 @@ description: Demonstrates a calculated property meets required thresholds.
 mode: subagent
 temperature: 0.1
 permission:
-  edit: deny
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": deny
   bash: ask # In case it needs to run a Python script for complex math
 ---
 # Calculation Skill

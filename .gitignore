@@ -9,3 +9,4 @@ venv/
 .env.*
 .opencode/node_modules/
 mcp-server/__pycache__/
+.backups/

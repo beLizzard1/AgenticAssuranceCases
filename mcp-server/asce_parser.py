@@ -4,6 +4,7 @@ from functools import lru_cache
 from datetime import datetime, timezone
 import hashlib
 import json
+import shutil
 from pathlib import Path
 from typing import Any, Optional
 import xml.etree.ElementTree as ET
@@ -148,6 +149,21 @@ def _split_refs(value: str) -> list[str]:
         if item:
             refs.append(item)
     return refs
+
+
+def create_backup(file_path: str) -> str | None:
+    """Create a timestamped backup before mutating an assurance-case file."""
+    source = Path(file_path)
+    if not source.exists():
+        return None
+
+    backup_dir = source.parent / ".backups"
+    backup_dir.mkdir(exist_ok=True)
+
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%fZ")
+    backup_path = backup_dir / f"{source.name}.{timestamp}.bak"
+    shutil.copy2(source, backup_path)
+    return str(backup_path)
 
 
 @lru_cache(maxsize=1)
@@ -877,6 +893,7 @@ def write_defeater(
     annotation: str | None = None,
 ) -> dict[str, Any]:
     """Create a defeater node and attach it to a target node."""
+    create_backup(file_path)
     tree, root = _load_tree(file_path)
     graph, _ = _build_graph(root)
 
@@ -946,6 +963,7 @@ def write_defeater(
 
 
 def _rewrite_node_text(file_path: str, node_id: str, text: str) -> dict[str, Any]:
+    create_backup(file_path)
     tree, root = _load_tree(file_path)
     element = _find_element(root, node_id)
     if element is None:
@@ -985,6 +1003,7 @@ def modify_assurance_case(
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Apply targeted updates to an AXML file and persist them in place."""
+    create_backup(file_path)
     schema = load_schema_metadata()
     tree, root = _load_tree(file_path)
     element = _find_element(root, node_id)

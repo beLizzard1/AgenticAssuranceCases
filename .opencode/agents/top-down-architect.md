@@ -10,7 +10,12 @@ permission:
     "substitution": allow
     "concretion": allow
   "asce_tools_*": allow
-  edit: ask
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": ask
 ---
 # Top-Down Graph Walker (Orchestrator)
 

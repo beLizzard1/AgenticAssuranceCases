@@ -5,7 +5,12 @@ temperature: 0.5
 permission:
   webfetch: allow
   "asce_tools_*": allow
-  edit: deny
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": deny
 ---
 # Rebutting Defeater Subagent
 

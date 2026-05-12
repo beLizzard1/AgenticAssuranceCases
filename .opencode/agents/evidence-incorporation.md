@@ -5,7 +5,12 @@ temperature: 0.1
 permission:
   "asce_tools_*": allow
   webfetch: allow
-  edit: deny
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": deny
 ---
 # Evidence Incorporation Skill
 

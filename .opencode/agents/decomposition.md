@@ -3,7 +3,12 @@ description: Breaks down a complex claim into smaller, manageable sub-claims.
 mode: subagent
 temperature: 0.4
 permission:
-  edit: deny
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": deny
 ---
 # Decomposition Skill
 

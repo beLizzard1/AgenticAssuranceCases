@@ -4,7 +4,12 @@ mode: primary
 temperature: 0.4
 permission:
   "asce_tools_*": allow
-  edit: deny
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": deny
 ---
 # Narrative Synthesizer
 

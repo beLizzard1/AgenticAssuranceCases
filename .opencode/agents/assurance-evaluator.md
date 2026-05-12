@@ -9,7 +9,12 @@ permission:
     "decomposition": allow
     "substitution": allow
     "concretion": allow
-  edit: ask
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": ask
 ---
 # Assurance Case Evaluator 
 

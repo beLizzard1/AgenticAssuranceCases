@@ -3,7 +3,12 @@ description: Replaces a claim with an equivalent claim about a proxy object/prop
 mode: subagent
 temperature: 0.4
 permission:
-  edit: deny
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": deny
 ---
 # Substitution Skill
 

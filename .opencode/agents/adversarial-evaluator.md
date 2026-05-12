@@ -8,7 +8,12 @@ permission:
     "undercutting-defeater": allow
     "undermining-defeater": allow
   "asce_tools_*": allow
-  edit: ask
+  read:
+    "*.axml": deny
+    "*": allow
+  edit:
+    "*.axml": deny
+    "*": ask
 ---
 # Adversarial Evaluator (Assurance 2.0)
 

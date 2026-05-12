@@ -1,0 +1,3 @@
+[submodule ".opencode/skills/lex-uk-law"]
+	path = .opencode/skills/lex-uk-law
+	url = https://github.com/i-dot-ai/lex.git

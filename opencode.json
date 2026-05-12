@@ -6,6 +6,10 @@
       "enabled": true,
       "command": "python",
       "args": ["mcp-server/asce_parser.py"]
+    },
+    "lex": {
+      "type": "http",
+      "url": "https://lex.lab.i.ai.gov.uk/mcp"
     }
   }
 }
