@@ -23,7 +23,7 @@ MODEL_USED = "gpt-5.4-mini"
 
 TITLE_TAGS = ("title", "name", "label")
 ANNOTATION_TAGS = ("annotation", "annotations", "comment", "description", "notes", "html")
-ID_ATTRS = ("id", "xml:id", "guid", "uid", "nodeid", "node_id")
+ID_ATTRS = ("reference", "id", "xml:id", "guid", "uid", "nodeid", "node_id")
 RELATION_ATTRS = ("source", "target", "from", "to", "ref", "refid", "parent", "child")
 
 TYPE_CODE_MAP = {
@@ -270,6 +270,68 @@ def _graph_payload(graph: nx.DiGraph) -> dict[str, Any]:
     return {"nodes": nodes, "edges": edges}
 
 
+def _node_payload(node_id: str, data: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "id": node_id,
+        "tag": data.get("tag"),
+        "type": data.get("type"),
+        "title": data.get("title"),
+        "annotation": data.get("annotation"),
+        "text": data.get("text"),
+        "attributes": data.get("attributes", {}),
+        "status_fields": data.get("status_fields", {}),
+        "path": data.get("path"),
+    }
+
+
+def _link_endpoints(link: ET.Element) -> tuple[str, str]:
+    source = _normalize_text(
+        link.findtext("source-reference")
+        or link.findtext("source")
+        or link.findtext("from")
+        or link.attrib.get("source-reference")
+        or link.attrib.get("source")
+        or link.attrib.get("from")
+    )
+    target = _normalize_text(
+        link.findtext("destination-reference")
+        or link.findtext("destination")
+        or link.findtext("target")
+        or link.attrib.get("destination-reference")
+        or link.attrib.get("destination")
+        or link.attrib.get("target")
+    )
+    return source, target
+
+
+def _link_type_metadata(link_type_code: str) -> dict[str, str]:
+    schema = load_schema_metadata()
+    link_types = list(schema.get("link_types", {}).items())
+    metadata: dict[str, str] = {"code": link_type_code, "key": "unknown"}
+
+    if link_type_code.isdigit():
+        index = int(link_type_code) - 1
+        if 0 <= index < len(link_types):
+            metadata["key"] = link_types[index][0]
+            metadata.update(link_types[index][1])
+            return metadata
+
+    if link_type_code in schema.get("link_types", {}):
+        metadata["key"] = link_type_code
+        metadata.update(schema["link_types"][link_type_code])
+
+    return metadata
+
+
+def _semantic_link_targets(root: ET.Element) -> set[str]:
+    targets: set[str] = set()
+    for link in root.findall(".//link"):
+        _, target = _link_endpoints(link)
+        if target:
+            targets.add(target)
+    return targets
+
+
 def _load_tree(file_path: str | Path) -> tuple[ET.ElementTree, ET.Element]:
     tree = ET.parse(str(file_path))
     return tree, tree.getroot()
@@ -278,6 +340,75 @@ def _load_tree(file_path: str | Path) -> tuple[ET.ElementTree, ET.Element]:
 def _find_element(root: ET.Element, node_id: str) -> Optional[ET.Element]:
     _, lookup = _build_graph(root)
     return lookup.get(node_id)
+
+
+@mcp.tool()
+def get_node_children(file_path: str, parent_node_id: str) -> dict[str, Any]:
+    """Return the immediate children connected to a node."""
+    _, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+
+    if parent_node_id not in graph:
+        raise ValueError(f"Unknown node_id: {parent_node_id}")
+
+    children: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+
+    for link in root.findall(".//link"):
+        source, target = _link_endpoints(link)
+        if source != parent_node_id or not target:
+            continue
+
+        if target not in graph:
+            continue
+
+        node_data = graph.nodes[target]
+        if node_data.get("tag") != "node":
+            continue
+
+        link_type_code = _normalize_text(link.findtext("type") or link.attrib.get("type"))
+        link_type = _link_type_metadata(link_type_code)
+        key = (target, link_type_code)
+        if key in seen:
+            continue
+        seen.add(key)
+
+        child_payload = _node_payload(target, node_data)
+        child_payload["link_type"] = link_type.get("key", "unknown")
+        child_payload["link_type_code"] = link_type_code or None
+        child_payload["link_reference"] = _normalize_text(link.attrib.get("reference")) or None
+        children.append(child_payload)
+
+    return {
+        "parent_node_id": parent_node_id,
+        "children": children,
+    }
+
+
+@mcp.tool()
+def get_root_claims(file_path: str) -> dict[str, Any]:
+    """Return the top-level claims that can serve as traversal entry points."""
+    _, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+    destination_ids = _semantic_link_targets(root)
+
+    roots: list[dict[str, Any]] = []
+    for node_id, data in graph.nodes(data=True):
+        if data.get("tag") != "node":
+            continue
+        if data.get("type") not in {"claim", "side-claim", "subcase"}:
+            continue
+        if node_id in destination_ids:
+            continue
+        roots.append(_node_payload(node_id, data))
+
+    roots.sort(key=lambda item: (item.get("title") or "", item.get("id") or ""))
+
+    return {
+        "file_path": str(file_path),
+        "root_claims": roots,
+        "count": len(roots),
+    }
 
 
 def _update_text_node(element: ET.Element, candidates: tuple[str, ...], value: str) -> bool:
