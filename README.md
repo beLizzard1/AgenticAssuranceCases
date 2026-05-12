@@ -81,6 +81,7 @@ graph TD
    - The local MCP server is configured in `opencode.json`.
    - The OpenCode agent files live under `.opencode/agents/`.
    - The AXML MCP skill lives at `.opencode/skills/axml-mcp-skill/SKILL.md` and guides agents toward graph-based assurance-case work.
+   - Load that skill when you need MCP-first assurance-case traversal, mutation, defeaters, or reconstruction.
    - The Lex skill is provided via the `extern/lex-uk-law` submodule and exposed to OpenCode through a symlink at `.opencode/skills/lex-uk-law`.
    - After cloning, run `git submodule update --init --recursive` so the skill source is available.
 
