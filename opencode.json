@@ -4,12 +4,12 @@
     "asce_tools": {
       "type": "local",
       "enabled": true,
-      "command": "python",
-      "args": ["mcp-server/asce_parser.py"]
+      "command": ["bash", "scripts/start-asce-mcp.sh"]
     },
     "lex": {
-      "type": "http",
-      "url": "https://lex.lab.i.ai.gov.uk/mcp"
+      "type": "remote",
+      "url": "https://lex.lab.i.ai.gov.uk/mcp",
+      "enabled": true
     }
   }
 }
