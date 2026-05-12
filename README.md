@@ -11,40 +11,6 @@ This repository contains an OpenCode-based environment for evaluating Claim-Argu
 * **ASCE Parser MCP Server:** Local tools for parsing `.axml`, fetching neighborhood context, inspecting immediate children, finding roots, managing shared system context, and writing targeted updates back to a case.
 * **Schema-Aware Parsing:** The parser uses `schemas/ASCAD 2.0.xml` as the source of truth for node, link, and status-field metadata.
 
-## System Map
-
-```mermaid
-flowchart TD
-  U[User / OpenCode Chat] --> NS[Narrative Synthesizer]
-  U --> AE[Assurance Evaluator]
-  U --> TD[Top-Down Architect]
-  U --> ADV[Adversarial Evaluator]
-
-  NS -->|parse_assurance_case| MCP[MCP Server: asce_tools]
-  AE -->|parse_assurance_case / get_assurance_neighborhood| MCP
-  TD -->|get_root_claims / get_node_children| MCP
-  ADV -->|get_assurance_neighborhood / write_defeater| MCP
-
-  MCP --> G[(AXML Graph + Schema)]
-  MCP --> C[(Shared System Context)]
-
-  AE --> S1[Evidence Incorporation]
-  AE --> S2[Calculation]
-  AE --> S3[Decomposition]
-  AE --> S4[Substitution]
-  AE --> S5[Concretion]
-
-  ADV --> R1[Rebutting Defeater]
-  ADV --> R2[Undercutting Defeater]
-  ADV --> R3[Undermining Defeater]
-
-  TD --> S1
-  TD --> S2
-  TD --> S3
-  TD --> S4
-  TD --> S5
-```
-
 ## Workflow Relationships
 
 ```mermaid
@@ -94,5 +60,20 @@ graph TD
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/yourusername/AgenticAssuranceCases.git](https://github.com/yourusername/AgenticAssuranceCases.git)
+   git clone https://github.com/beLizzard1/AgenticAssuranceCases.git
    cd AgenticAssuranceCases
+   ```
+
+2. **Install the MCP server dependencies:**
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   pip install -r mcp-server/requirements.txt
+   ```
+
+3. **Open the repo in OpenCode:**
+   - The local MCP server is configured in `opencode.json`.
+   - The OpenCode agent files live under `.opencode/agents/`.
+
+4. **Run against an `.axml` file:**
+   - Use the included sample case in `examples/` or point the agents at your own `.axml` file.
