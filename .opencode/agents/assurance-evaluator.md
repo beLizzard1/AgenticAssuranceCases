@@ -37,8 +37,9 @@ When presented with a new claim, you must evaluate it step-by-step and delegate 
     - If it is easier to justify for an equivalent object or property -> Invoke `@substitution`
 
 4. **Gather Local Context:**
-   - Before handing a claim to any subagent, request the claim's neighborhood from the `asce_tools` MCP server so the subagent can see adjacent claims, arguments, and evidence.
-   - Use the schema-aware parser output as the source of truth for node type, status fields, and link context.
+    - Before handing a claim to any subagent, request the claim's neighborhood from the `asce_tools` MCP server so the subagent can see adjacent claims, arguments, and evidence.
+    - Use the schema-aware parser output as the source of truth for node type, status fields, and link context.
+    - For broader assurance-case MCP usage guidance, load the `axml-mcp-skill`.
 
 5. **Write Back Carefully:**
    - If a claim or annotation needs modification, use the MCP write-back tool only after the change has been approved.

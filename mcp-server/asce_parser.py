@@ -22,6 +22,7 @@ mcp = FastMCP(MCP_SERVER_NAME)
 MCP_FINGERPRINT = "asce_parser_v1.0.3_abc123"
 MODEL_USED = "gpt-5.4-mini"
 SHARED_AGENT_CONTEXT = {"system_brief": "No context provided yet."}
+ACTIVE_AXML_PATH: str | None = None
 EVIDENCE_PROVIDER_REGISTRY: dict[str, dict[str, Any]] = {}
 
 TITLE_TAGS = ("user-title", "title", "name", "label")
@@ -117,6 +118,23 @@ def _provider_matches(provider: dict[str, Any], query: str | None = None, capabi
     return True
 
 
+def _remember_active_axml_path(file_path: str | Path) -> str:
+    global ACTIVE_AXML_PATH
+    ACTIVE_AXML_PATH = str(Path(file_path))
+    return ACTIVE_AXML_PATH
+
+
+def _resolve_file_path(file_path: str | None) -> str:
+    resolved = _normalize_text(file_path)
+    if resolved:
+        return _remember_active_axml_path(resolved)
+
+    if ACTIVE_AXML_PATH:
+        return ACTIVE_AXML_PATH
+
+    raise ValueError("file_path is required until a reconstructed case has been selected")
+
+
 register_evidence_provider(
     "asce_tools",
     "Schema-aware ASCE parser, neighborhood, registry, and write-back tools",
@@ -125,6 +143,7 @@ register_evidence_provider(
         "get_assurance_neighborhood",
         "get_root_claims",
         "get_node_children",
+        "reconstruct_assurance_case",
         "write_defeater",
         "modify_assurance_case",
         "set_system_context",
@@ -328,13 +347,23 @@ def _build_graph(root: ET.Element) -> tuple[nx.DiGraph, dict[str, ET.Element]]:
             if lowered in RELATION_ATTRS or lowered.endswith("ref") or lowered.endswith("refs"):
                 for ref in _split_refs(attr_value):
                     if ref and ref != node_id:
-                        graph.add_edge(node_id, ref, relation=attr_name)
+                        existing = graph.get_edge_data(node_id, ref, default={})
+                        if existing.get("edge_kind") == "link":
+                            continue
+                        graph.add_edge(node_id, ref, relation=attr_name, edge_kind="reference")
 
         if _local_name(element.tag).lower() == "link":
             source_ref, target_ref = _link_endpoints(element)
             if source_ref and target_ref and source_ref in graph and target_ref in graph:
                 link_type_code = _normalize_text(element.findtext("type") or element.attrib.get("type"))
-                graph.add_edge(source_ref, target_ref, relation=_link_type_metadata(link_type_code).get("key", "link"))
+                graph.add_edge(
+                    source_ref,
+                    target_ref,
+                    relation=_link_type_metadata(link_type_code).get("key", "link"),
+                    edge_kind="link",
+                    link_type_code=link_type_code,
+                    link_reference=_normalize_text(element.attrib.get("reference")),
+                )
 
         for index, child in enumerate(list(element), start=1):
             child_path = f"{path}/{_local_name(child.tag)}[{index}]"
@@ -368,10 +397,174 @@ def _graph_payload(graph: nx.DiGraph) -> dict[str, Any]:
                 "source": source,
                 "target": target,
                 "relation": data.get("relation"),
+                "edge_kind": data.get("edge_kind"),
             }
         )
 
     return {"nodes": nodes, "edges": edges}
+
+
+def _clone_element(element: ET.Element) -> ET.Element:
+    return ET.fromstring(ET.tostring(element, encoding="utf-8"))
+
+
+def _clone_tree(root: ET.Element) -> ET.Element:
+    return _clone_element(root)
+
+
+def _link_type_code(link_type_key: str) -> str:
+    schema = load_schema_metadata()
+    keys = list(schema.get("link_types", {}).keys())
+    normalized = _normalize_text(link_type_key)
+    if normalized in schema.get("link_types", {}):
+        return str(keys.index(normalized) + 1)
+    return "1"
+
+
+def _unique_link_reference(existing_ids: set[str], source_reference: str, destination_reference: str, relation: str) -> str:
+    base = f"LN{source_reference}{destination_reference}"
+    candidate = base
+    counter = 1
+    while candidate in existing_ids:
+        candidate = f"{base}-{counter}"
+        counter += 1
+    return candidate
+
+
+def _iter_link_edges(graph: nx.DiGraph) -> list[tuple[str, str, dict[str, Any]]]:
+    edges: list[tuple[str, str, dict[str, Any]]] = []
+    for source, target, data in graph.edges(data=True):
+        if data.get("edge_kind") == "link":
+            edges.append((source, target, dict(data)))
+    edges.sort(key=lambda item: (item[0], item[1], _normalize_text(item[2].get("relation"))))
+    return edges
+
+
+def _sync_graph_node_to_element(element: ET.Element, node_id: str, data: dict[str, Any], schema: dict[str, Any]) -> None:
+    node_type = _normalize_text(data.get("type"))
+    if node_type and node_type not in schema.get("node_types", {}):
+        raise ValueError(f"Unknown schema node type: {node_type}")
+
+    element.set("reference", node_id)
+
+    title = _normalize_text(data.get("title"))
+    if title:
+        _update_primary_text(element, title)
+
+    annotation = _normalize_text(data.get("annotation"))
+    if annotation:
+        _update_text_node(element, ANNOTATION_TAGS, annotation)
+
+    status_fields = data.get("status_fields") or {}
+    unknown = [key for key in status_fields if key not in schema.get("status_fields", {})]
+    if unknown:
+        raise ValueError(f"Unknown schema status field(s): {', '.join(sorted(unknown))}")
+    if status_fields:
+        _update_status_fields(element, status_fields)
+
+
+def _rebuild_links(root: ET.Element, graph: nx.DiGraph) -> int:
+    links_container = root.find("links")
+    if links_container is None:
+        links_container = ET.SubElement(root, "links")
+
+    for child in list(links_container):
+        links_container.remove(child)
+
+    existing_ids = _existing_ids(root, "link")
+    count = 0
+    for source, target, data in _iter_link_edges(graph):
+        relation = _normalize_text(data.get("relation"))
+        link = ET.SubElement(links_container, "link")
+        link_reference = data.get("link_reference") or _unique_link_reference(existing_ids, source, target, relation)
+        existing_ids.add(link_reference)
+        link.set("reference", link_reference)
+
+        type_element = ET.SubElement(link, "type")
+        type_element.text = data.get("link_type_code") or _link_type_code(relation)
+
+        strength_element = ET.SubElement(link, "strength")
+        strength_element.text = "1"
+
+        source_element = ET.SubElement(link, "source-reference")
+        source_element.text = source
+
+        destination_element = ET.SubElement(link, "destination-reference")
+        destination_element.text = target
+
+        attachment = ET.SubElement(link, "attachment")
+        attachment.set("x-source", "0")
+        attachment.set("y-source", "0")
+        attachment.set("x-destination", "0")
+        attachment.set("y-destination", "0")
+        count += 1
+
+    return count
+
+
+def _validate_reconstructed_case(graph: nx.DiGraph, root: ET.Element) -> None:
+    schema = load_schema_metadata()
+    node_ids = {node_id for node_id, data in graph.nodes(data=True) if data.get("tag") == "node"}
+
+    for node_id, data in graph.nodes(data=True):
+        if data.get("tag") != "node":
+            continue
+        node_type = _normalize_text(data.get("type"))
+        if node_type and node_type not in schema.get("node_types", {}):
+            raise ValueError(f"Unknown schema node type: {node_type}")
+
+        unknown = [key for key in (data.get("status_fields") or {}) if key not in schema.get("status_fields", {})]
+        if unknown:
+            raise ValueError(f"Unknown schema status field(s): {', '.join(sorted(unknown))}")
+
+    for source, target, data in graph.edges(data=True):
+        if data.get("edge_kind") != "link":
+            continue
+        if source not in node_ids or target not in node_ids:
+            raise ValueError(f"Invalid reconstructed link endpoint(s): {source} -> {target}")
+
+    if root.find("nodes") is None:
+        raise ValueError("Reconstructed output is missing a nodes container")
+    if root.find("links") is None:
+        raise ValueError("Reconstructed output is missing a links container")
+
+
+def _reconstruct_assurance_case_tree(file_path: str) -> tuple[ET.ElementTree, ET.Element, nx.DiGraph]:
+    tree, root = _load_tree(file_path)
+    graph, lookup = _build_graph(root)
+
+    reconstructed_root = _clone_tree(root)
+    for node_id, data in graph.nodes(data=True):
+        if data.get("tag") != "node":
+            continue
+        element = _find_element(reconstructed_root, node_id)
+        if element is None:
+            continue
+        _sync_graph_node_to_element(element, node_id, data, load_schema_metadata())
+
+    _rebuild_links(reconstructed_root, graph)
+    _validate_reconstructed_case(graph, reconstructed_root)
+
+    return ET.ElementTree(reconstructed_root), reconstructed_root, graph
+
+
+def _default_reconstructed_path(source_path: str | Path) -> Path:
+    source = Path(source_path)
+    candidate = source.with_name(f"{source.stem}.reconstructed{source.suffix}")
+    counter = 1
+    while candidate.exists():
+        candidate = source.with_name(f"{source.stem}.reconstructed-{counter}{source.suffix}")
+        counter += 1
+    return candidate
+
+
+def _resolve_output_path(source_path: str | Path, output_path: str | None = None) -> Path:
+    if output_path:
+        candidate = Path(output_path).expanduser()
+        if not candidate.is_absolute():
+            candidate = Path(source_path).parent / candidate
+        return candidate
+    return _default_reconstructed_path(source_path)
 
 
 def _existing_ids(root: ET.Element, tag_name: str, attribute_name: str = "reference") -> set[str]:
@@ -603,8 +796,9 @@ def _find_element(root: ET.Element, node_id: str) -> Optional[ET.Element]:
 
 
 @mcp.tool()
-def get_node_children(file_path: str, parent_node_id: str) -> dict[str, Any]:
+def get_node_children(parent_node_id: str, file_path: str | None = None) -> dict[str, Any]:
     """Return the immediate children connected to a node."""
+    file_path = _resolve_file_path(file_path)
     _, root = _load_tree(file_path)
     graph, _ = _build_graph(root)
 
@@ -646,8 +840,9 @@ def get_node_children(file_path: str, parent_node_id: str) -> dict[str, Any]:
 
 
 @mcp.tool()
-def get_root_claims(file_path: str) -> dict[str, Any]:
+def get_root_claims(file_path: str | None = None) -> dict[str, Any]:
     """Return the top-level claims that can serve as traversal entry points."""
+    file_path = _resolve_file_path(file_path)
     _, root = _load_tree(file_path)
     graph, _ = _build_graph(root)
     destination_ids = _semantic_link_targets(root)
@@ -668,6 +863,26 @@ def get_root_claims(file_path: str) -> dict[str, Any]:
         "file_path": str(file_path),
         "root_claims": roots,
         "count": len(roots),
+    }
+
+
+@mcp.tool()
+def reconstruct_assurance_case(file_path: str | None = None, output_path: str | None = None) -> dict[str, Any]:
+    """Rebuild an assurance case into a new `.axml` file and promote it to active state."""
+    source_path = _resolve_file_path(file_path)
+    tree, root, graph = _reconstruct_assurance_case_tree(source_path)
+    destination = _resolve_output_path(source_path, output_path)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    tree.write(str(destination), encoding="utf-8", xml_declaration=True)
+    active_path = _remember_active_axml_path(destination)
+    SHARED_AGENT_CONTEXT["active_case_path"] = active_path
+
+    return {
+        "source_file_path": source_path,
+        "file_path": active_path,
+        "status": "written",
+        "node_count": sum(1 for _, data in graph.nodes(data=True) if data.get("tag") == "node"),
+        "link_count": len(_iter_link_edges(graph)),
     }
 
 
@@ -799,8 +1014,9 @@ def _append_annotation_provenance(
 
 
 @mcp.tool()
-def parse_assurance_case(file_path: str, focus_node_id: str | None = None, radius: int = 2) -> dict[str, Any]:
+def parse_assurance_case(file_path: str | None = None, focus_node_id: str | None = None, radius: int = 2) -> dict[str, Any]:
     """Parse an AXML assurance case into a schema-aware NetworkX graph."""
+    file_path = _resolve_file_path(file_path)
     _, root = _load_tree(file_path)
     graph, _ = _build_graph(root)
 
@@ -813,14 +1029,15 @@ def parse_assurance_case(file_path: str, focus_node_id: str | None = None, radiu
     }
 
     if focus_node_id:
-        payload["neighborhood"] = get_assurance_neighborhood(file_path, focus_node_id, radius)
+        payload["neighborhood"] = get_assurance_neighborhood(focus_node_id, radius, file_path=file_path)
 
     return payload
 
 
 @mcp.tool()
-def get_assurance_neighborhood(file_path: str, node_id: str, radius: int = 2) -> dict[str, Any]:
+def get_assurance_neighborhood(node_id: str, radius: int = 2, file_path: str | None = None) -> dict[str, Any]:
     """Return a local subgraph around a node so subagents can see neighborhood context."""
+    file_path = _resolve_file_path(file_path)
     _, root = _load_tree(file_path)
     graph, _ = _build_graph(root)
 
@@ -887,12 +1104,13 @@ def get_evidence_provider(name: str) -> dict[str, Any]:
 
 @mcp.tool()
 def write_defeater(
-    file_path: str,
     target_node_id: str,
     title: str | None = None,
     annotation: str | None = None,
+    file_path: str | None = None,
 ) -> dict[str, Any]:
     """Create a defeater node and attach it to a target node."""
+    file_path = _resolve_file_path(file_path)
     create_backup(file_path)
     tree, root = _load_tree(file_path)
     graph, _ = _build_graph(root)
@@ -962,7 +1180,8 @@ def write_defeater(
     }
 
 
-def _rewrite_node_text(file_path: str, node_id: str, text: str) -> dict[str, Any]:
+def _rewrite_node_text(file_path: str | None, node_id: str, text: str) -> dict[str, Any]:
+    file_path = _resolve_file_path(file_path)
     create_backup(file_path)
     tree, root = _load_tree(file_path)
     element = _find_element(root, node_id)
@@ -982,27 +1201,28 @@ def _rewrite_node_text(file_path: str, node_id: str, text: str) -> dict[str, Any
 
 
 @mcp.tool()
-def update_node(file_path: str, node_id: str, text: str) -> dict[str, Any]:
+def update_node(node_id: str, text: str, file_path: str | None = None) -> dict[str, Any]:
     """Rewrite the primary text of an existing node in place."""
     return _rewrite_node_text(file_path, node_id, text)
 
 
 @mcp.tool()
-def rewrite_node(file_path: str, node_id: str, text: str) -> dict[str, Any]:
+def rewrite_node(node_id: str, text: str, file_path: str | None = None) -> dict[str, Any]:
     """Alias for update_node."""
     return _rewrite_node_text(file_path, node_id, text)
 
 
 @mcp.tool()
 def modify_assurance_case(
-    file_path: str,
     node_id: str,
     title: str | None = None,
     annotation: str | None = None,
     status_fields: dict[str, Any] | None = None,
     attributes: dict[str, Any] | None = None,
+    file_path: str | None = None,
 ) -> dict[str, Any]:
     """Apply targeted updates to an AXML file and persist them in place."""
+    file_path = _resolve_file_path(file_path)
     create_backup(file_path)
     schema = load_schema_metadata()
     tree, root = _load_tree(file_path)
