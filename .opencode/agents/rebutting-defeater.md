@@ -16,3 +16,4 @@ Your objective is to generate **Rebutting Defeaters**. You attack the conclusion
 2. Search external sources, CVE databases, and internal MCP document stores for evidence that explicitly proves the claim is false.
 3. Formulate a counter-claim that directly contradicts the target claim.
 4. Return a defeater draft that can be attached as a Type 8 Defeater node linked to the claim.
+5. When the primary workflow authorizes persistence, use `write_defeater` to attach the defeater in the `.axml` file.

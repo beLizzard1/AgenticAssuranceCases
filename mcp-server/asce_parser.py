@@ -20,8 +20,10 @@ MCP_SERVER_NAME = "asce_tools"
 mcp = FastMCP(MCP_SERVER_NAME)
 MCP_FINGERPRINT = "asce_parser_v1.0.3_abc123"
 MODEL_USED = "gpt-5.4-mini"
+SHARED_AGENT_CONTEXT = {"system_brief": "No context provided yet."}
+EVIDENCE_PROVIDER_REGISTRY: dict[str, dict[str, Any]] = {}
 
-TITLE_TAGS = ("title", "name", "label")
+TITLE_TAGS = ("user-title", "title", "name", "label")
 ANNOTATION_TAGS = ("annotation", "annotations", "comment", "description", "notes", "html")
 ID_ATTRS = ("reference", "id", "xml:id", "guid", "uid", "nodeid", "node_id")
 RELATION_ATTRS = ("source", "target", "from", "to", "ref", "refid", "parent", "child")
@@ -51,6 +53,86 @@ def _normalize_text(value: Any) -> str:
     if value is None:
         return ""
     return " ".join(str(value).split())
+
+
+def _normalize_capabilities(capabilities: Any) -> list[str]:
+    if capabilities is None:
+        return []
+    if isinstance(capabilities, str):
+        items = [capabilities]
+    else:
+        items = list(capabilities)
+
+    normalized = []
+    for item in items:
+        text = _normalize_text(item)
+        if text:
+            normalized.append(text)
+    return sorted(set(normalized))
+
+
+def register_evidence_provider(
+    name: str,
+    description: str,
+    capabilities: Any = None,
+    tool_prefix: str | None = None,
+    source_type: str = "mcp",
+    status: str = "available",
+) -> None:
+    provider_name = _normalize_text(name)
+    if not provider_name:
+        raise ValueError("Provider name is required")
+
+    EVIDENCE_PROVIDER_REGISTRY[provider_name] = {
+        "name": provider_name,
+        "description": _normalize_text(description),
+        "capabilities": _normalize_capabilities(capabilities),
+        "tool_prefix": _normalize_text(tool_prefix) or f"{provider_name}_*",
+        "source_type": _normalize_text(source_type) or "mcp",
+        "status": _normalize_text(status) or "available",
+    }
+
+
+def _provider_matches(provider: dict[str, Any], query: str | None = None, capability: str | None = None) -> bool:
+    if capability:
+        needle = _normalize_text(capability).lower()
+        haystack = " ".join(provider.get("capabilities", [])).lower()
+        if needle not in haystack:
+            return False
+
+    if query:
+        needle = _normalize_text(query).lower()
+        if needle:
+            fields = [
+                provider.get("name", ""),
+                provider.get("description", ""),
+                " ".join(provider.get("capabilities", [])),
+                provider.get("tool_prefix", ""),
+            ]
+            haystack = " ".join(fields).lower()
+            if needle not in haystack:
+                return False
+
+    return True
+
+
+register_evidence_provider(
+    "asce_tools",
+    "Schema-aware ASCE parser, neighborhood, registry, and write-back tools",
+    capabilities=[
+        "parse_assurance_case",
+        "get_assurance_neighborhood",
+        "get_root_claims",
+        "get_node_children",
+        "write_defeater",
+        "modify_assurance_case",
+        "set_system_context",
+        "get_system_context",
+        "discover_evidence_providers",
+        "list_evidence_providers",
+    ],
+    tool_prefix="asce_tools_*",
+)
 
 
 def _strip_html(value: str) -> str:
@@ -232,6 +314,12 @@ def _build_graph(root: ET.Element) -> tuple[nx.DiGraph, dict[str, ET.Element]]:
                     if ref and ref != node_id:
                         graph.add_edge(node_id, ref, relation=attr_name)
 
+        if _local_name(element.tag).lower() == "link":
+            source_ref, target_ref = _link_endpoints(element)
+            if source_ref and target_ref and source_ref in graph and target_ref in graph:
+                link_type_code = _normalize_text(element.findtext("type") or element.attrib.get("type"))
+                graph.add_edge(source_ref, target_ref, relation=_link_type_metadata(link_type_code).get("key", "link"))
+
         for index, child in enumerate(list(element), start=1):
             child_path = f"{path}/{_local_name(child.tag)}[{index}]"
             walk(child, child_path, node_id)
@@ -268,6 +356,154 @@ def _graph_payload(graph: nx.DiGraph) -> dict[str, Any]:
         )
 
     return {"nodes": nodes, "edges": edges}
+
+
+def _existing_ids(root: ET.Element, tag_name: str, attribute_name: str = "reference") -> set[str]:
+    values: set[str] = set()
+    for element in root.findall(f".//{tag_name}"):
+        value = _normalize_text(element.attrib.get(attribute_name))
+        if value:
+            values.add(value)
+    return values
+
+
+def _allocate_numeric_reference(existing_ids: set[str], prefix: str) -> str:
+    highest = 0
+    for value in existing_ids:
+        if value.startswith(prefix):
+            suffix = value[len(prefix) :]
+            if suffix.isdigit():
+                highest = max(highest, int(suffix))
+
+    candidate = f"{prefix}{highest + 1}"
+    while candidate in existing_ids:
+        highest += 1
+        candidate = f"{prefix}{highest + 1}"
+    return candidate
+
+
+def _layout_offsets(node: ET.Element, dx: int = 4000, dy: int = 0) -> dict[str, str]:
+    layout = node.find("layout")
+    if layout is None:
+        return {"x": str(dx), "y": str(dy), "height": "3960", "width": "3960"}
+
+    attributes = {key: value for key, value in layout.attrib.items()}
+    x_value = _normalize_text(attributes.get("x"))
+    y_value = _normalize_text(attributes.get("y"))
+
+    try:
+        attributes["x"] = str(int(x_value) + dx)
+    except ValueError:
+        attributes["x"] = str(dx)
+
+    try:
+        attributes["y"] = str(int(y_value) + dy)
+    except ValueError:
+        attributes["y"] = str(dy)
+
+    attributes.setdefault("height", "3960")
+    attributes.setdefault("width", "3960")
+    return attributes
+
+
+def _ensure_status_field(container: ET.Element, name: str, value: str) -> None:
+    for child in list(container):
+        key = _normalize_text(child.attrib.get("name") or child.attrib.get("key") or child.findtext("key")).lower()
+        if key == name.lower():
+            child.text = value
+            return
+
+    status_field = ET.SubElement(container, "status-field")
+    status_field.set("name", name)
+    status_field.set("type", "string")
+    status_field.text = value
+
+
+def _update_primary_text(element: ET.Element, text: str) -> bool:
+    normalized = _normalize_text(text)
+    updated = False
+
+    for candidate in TITLE_TAGS:
+        for child in list(element):
+            if _local_name(child.tag).lower() == candidate:
+                child.text = normalized
+                updated = True
+                break
+        if updated:
+            break
+
+    if not updated:
+        created = ET.SubElement(element, TITLE_TAGS[0])
+        created.text = normalized
+
+    if "title" in element.attrib:
+        element.set("title", normalized)
+    if "name" in element.attrib:
+        element.set("name", normalized)
+    if "label" in element.attrib:
+        element.set("label", normalized)
+
+    return True
+
+
+def _ensure_views_include(
+    root: ET.Element,
+    node_reference: str,
+    layout_attrs: dict[str, str],
+    target_reference: str | None = None,
+) -> None:
+    views_container = root.find("views")
+    if views_container is None:
+        return
+
+    for view in views_container.findall("view"):
+        nodes_container = view.find("nodes")
+        if nodes_container is None:
+            nodes_container = ET.SubElement(view, "nodes")
+
+        if target_reference is not None and not any(
+            _normalize_text(node.attrib.get("reference")) == target_reference for node in nodes_container.findall("node")
+        ):
+            continue
+
+        if any(_normalize_text(node.attrib.get("reference")) == node_reference for node in nodes_container.findall("node")):
+            continue
+
+        view_node = ET.SubElement(nodes_container, "node")
+        view_node.set("reference", node_reference)
+        layout = ET.SubElement(view_node, "layout")
+        for key, value in layout_attrs.items():
+            layout.set(key, value)
+
+
+def _ensure_link_exists(root: ET.Element, reference: str, link_type: str, source_reference: str, destination_reference: str) -> ET.Element:
+    links_container = root.find("links")
+    if links_container is None:
+        links_container = ET.SubElement(root, "links")
+
+    existing = { _normalize_text(link.attrib.get("reference")) for link in links_container.findall("link") }
+    candidate = reference
+    counter = 1
+    while candidate in existing:
+        candidate = f"{reference}-{counter}"
+        counter += 1
+
+    link = ET.SubElement(links_container, "link")
+    link.set("reference", candidate)
+    link_type_el = ET.SubElement(link, "type")
+    link_type_el.text = link_type
+    strength_el = ET.SubElement(link, "strength")
+    strength_el.text = "1"
+    source_el = ET.SubElement(link, "source-reference")
+    source_el.text = source_reference
+    dest_el = ET.SubElement(link, "destination-reference")
+    dest_el.text = destination_reference
+    attachment = ET.SubElement(link, "attachment")
+    attachment.set("x-source", "0")
+    attachment.set("y-source", "0")
+    attachment.set("x-destination", "0")
+    attachment.set("y-destination", "0")
+    return link
 
 
 def _node_payload(node_id: str, data: dict[str, Any]) -> dict[str, Any]:
@@ -338,6 +574,14 @@ def _load_tree(file_path: str | Path) -> tuple[ET.ElementTree, ET.Element]:
 
 
 def _find_element(root: ET.Element, node_id: str) -> Optional[ET.Element]:
+    direct = root.find(f"./nodes/node[@reference='{node_id}']")
+    if direct is not None:
+        return direct
+
+    for node in root.findall("./nodes/node"):
+        if _normalize_text(node.attrib.get("reference")) == node_id:
+            return node
+
     _, lookup = _build_graph(root)
     return lookup.get(node_id)
 
@@ -578,6 +822,157 @@ def get_assurance_neighborhood(file_path: str, node_id: str, radius: int = 2) ->
         "schema": load_schema_metadata(),
         "graph": _graph_payload(subgraph),
     }
+
+
+@mcp.tool()
+def set_system_context(brief_text: str) -> str:
+    """Save the current system context brief in memory."""
+    SHARED_AGENT_CONTEXT["system_brief"] = _normalize_text(brief_text)
+    return "Context updated successfully."
+
+
+@mcp.tool()
+def get_system_context() -> str:
+    """Retrieve the current system context brief."""
+    return SHARED_AGENT_CONTEXT["system_brief"]
+
+
+@mcp.tool()
+def discover_evidence_providers(query: str | None = None, capability: str | None = None) -> dict[str, Any]:
+    """Discover available evidence providers using the local registry."""
+    providers = [
+        provider
+        for provider in EVIDENCE_PROVIDER_REGISTRY.values()
+        if _provider_matches(provider, query=query, capability=capability)
+    ]
+
+    return {
+        "query": _normalize_text(query),
+        "capability": _normalize_text(capability),
+        "count": len(providers),
+        "providers": providers,
+    }
+
+
+@mcp.tool()
+def list_evidence_providers() -> dict[str, Any]:
+    """List all evidence providers in the registry."""
+    return discover_evidence_providers()
+
+
+@mcp.tool()
+def get_evidence_provider(name: str) -> dict[str, Any]:
+    """Return metadata for one evidence provider."""
+    provider = EVIDENCE_PROVIDER_REGISTRY.get(_normalize_text(name))
+    if provider is None:
+        raise ValueError(f"Unknown evidence provider: {name}")
+    return provider
+
+
+@mcp.tool()
+def write_defeater(
+    file_path: str,
+    target_node_id: str,
+    title: str | None = None,
+    annotation: str | None = None,
+) -> dict[str, Any]:
+    """Create a defeater node and attach it to a target node."""
+    tree, root = _load_tree(file_path)
+    graph, _ = _build_graph(root)
+
+    if target_node_id not in graph:
+        raise ValueError(f"Unknown node_id: {target_node_id}")
+
+    target_type = _normalize_text(graph.nodes[target_node_id].get("type"))
+    if target_type in {"comment", "caption"}:
+        raise ValueError(f"Defeaters cannot be attached to {target_type} nodes")
+
+    nodes_container = root.find("nodes")
+    if nodes_container is None:
+        nodes_container = ET.SubElement(root, "nodes")
+
+    target_element = _find_element(root, target_node_id)
+    if target_element is None:
+        raise ValueError(f"Unknown node_id: {target_node_id}")
+
+    existing_node_ids = set(graph.nodes)
+    defeater_node_id = _allocate_numeric_reference(existing_node_ids, "N")
+    defeater_title = _normalize_text(title or annotation or f"Defeater for {target_node_id}")
+
+    defeater_node = ET.SubElement(nodes_container, "node")
+    defeater_node.set("reference", defeater_node_id)
+
+    layout = ET.SubElement(defeater_node, "layout")
+    for key, value in _layout_offsets(target_element, dx=4000, dy=0).items():
+        layout.set(key, value)
+
+    node_type = ET.SubElement(defeater_node, "type")
+    node_type.text = "8"
+
+    user_id = ET.SubElement(defeater_node, "user-id")
+    user_id.text = defeater_node_id
+
+    user_title = ET.SubElement(defeater_node, "user-title")
+    user_title.text = defeater_title
+
+    status_fields = ET.SubElement(defeater_node, "status-fields")
+    if annotation is not None:
+        _ensure_status_field(status_fields, "annotation", _normalize_text(annotation))
+    else:
+        _ensure_status_field(status_fields, "annotation", "")
+
+    html_annotation = ET.SubElement(defeater_node, "html-annotation")
+    html_annotation.text = _normalize_text(annotation or defeater_title)
+
+    links_container = root.find("links")
+    if links_container is None:
+        links_container = ET.SubElement(root, "links")
+
+    link_reference = f"LN{defeater_node_id}{target_node_id}"
+    link = _ensure_link_exists(root, link_reference, "5", defeater_node_id, target_node_id)
+
+    _ensure_views_include(root, defeater_node_id, _layout_offsets(target_element, dx=4000, dy=0), target_node_id)
+
+    tree.write(str(file_path), encoding="utf-8", xml_declaration=True)
+
+    return {
+        "file_path": str(file_path),
+        "mutation": "write_defeater",
+        "status": "written",
+        "target_node_id": target_node_id,
+        "defeater_node_id": defeater_node_id,
+        "link_reference": _normalize_text(link.attrib.get("reference")),
+    }
+
+
+def _rewrite_node_text(file_path: str, node_id: str, text: str) -> dict[str, Any]:
+    tree, root = _load_tree(file_path)
+    element = _find_element(root, node_id)
+    if element is None:
+        raise ValueError(f"Unknown node_id: {node_id}")
+
+    _update_primary_text(element, text)
+    tree.write(str(file_path), encoding="utf-8", xml_declaration=True)
+
+    return {
+        "file_path": str(file_path),
+        "mutation": "rewrite_node",
+        "status": "written",
+        "node_id": node_id,
+        "changed_fields": ["title"],
+    }
+
+
+@mcp.tool()
+def update_node(file_path: str, node_id: str, text: str) -> dict[str, Any]:
+    """Rewrite the primary text of an existing node in place."""
+    return _rewrite_node_text(file_path, node_id, text)
+
+
+@mcp.tool()
+def rewrite_node(file_path: str, node_id: str, text: str) -> dict[str, Any]:
+    """Alias for update_node."""
+    return _rewrite_node_text(file_path, node_id, text)
 
 
 @mcp.tool()

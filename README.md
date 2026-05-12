@@ -8,7 +8,8 @@ This repository contains an OpenCode-based environment for evaluating Claim-Argu
 * **Narrative Synthesizer Agent:** A human-facing briefing mode plus a shared system-context generator for downstream agents.
 * **Specialized Assurance Subagents:** Evidence Incorporation, Calculation, Decomposition, Substitution, and Concretion.
 * **Adversarial Evaluator Agent:** A red-team pass with rebutting, undercutting, and undermining defeater strategies.
-* **ASCE Parser MCP Server:** Local tools for parsing `.axml`, fetching neighborhood context, inspecting immediate children, finding roots, managing shared system context, and writing targeted updates back to a case.
+* **ASCE Parser MCP Server:** Local tools for parsing `.axml`, fetching neighborhood context, inspecting immediate children, finding roots, managing shared system context, discovering evidence providers, and writing targeted updates back to a case.
+* **Defeater Taxonomy Packet:** A structured challenger prompt packet with route mappings, concrete examples, STRIDE/STPA-Sec overlays, and refutation guardrails.
 * **Schema-Aware Parsing:** The parser uses `schemas/ASCAD 2.0.xml` as the source of truth for node, link, and status-field metadata.
 
 ## Workflow Relationships
@@ -30,6 +31,8 @@ flowchart LR
   D4 --> E6[Generate defeaters]
 
   E2 --> F[(Shared Context)]
+  E5 --> G[(Evidence Provider Registry)]
+  E6 --> H[(Defeater Taxonomy Packet)]
 ```
 
 ## Agent Relationships
@@ -52,8 +55,11 @@ graph TD
   ADV --> UC[Undercutting Defeater]
   ADV --> UM[Undermining Defeater]
 
+  ADV --> TAX[Defeater Taxonomy Packet]
+
   NS[Narrative Synthesizer] --> MCP[MCP Server]
   MCP --> CTX[(System Context)]
+  MCP --> REG[(Evidence Provider Registry)]
 ```
 
 ## Installation & Setup
