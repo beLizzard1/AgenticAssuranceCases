@@ -1,0 +1,27 @@
+name: Branch-split validation
+
+on:
+  pull_request:
+    branches:
+      - master
+      - opencode
+      - pidev
+
+jobs:
+  validate-branch-split:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run branch-split validation
+        run: |
+          bash openspec/changes/split-opencode-pidev-branches/scripts/validate-branch-split.sh "$GITHUB_HEAD_REF" || exit 1
+      - name: Skills consistency check
+        run: |
+          bash openspec/changes/split-opencode-pidev-branches/scripts/check-skills-consistency.sh || true
+      - name: Trigger sync check for non-packaging changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash openspec/changes/split-opencode-pidev-branches/scripts/trigger_sync_on_nonpackaging.sh || true

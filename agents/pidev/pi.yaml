@@ -1,0 +1,6 @@
+name: agent-pidev
+version: 0.1.0
+entrypoint: run.py
+description: "Pidev agent package metadata (example). Replace with real fields before publishing."
+dependencies:
+  - python>=3.11

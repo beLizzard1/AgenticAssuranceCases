@@ -1,0 +1,9 @@
+# CODEOWNERS for agent and shared directories
+# Format: path    @owner
+
+/.github/    @repo-maintainers
+/docs/       @repo-maintainers
+/agents/opencode/    @opencode-team
+/agents/pidev/       @pidev-team
+/.opencode/skills/    @repo-maintainers
+/scripts/    @repo-maintainers
