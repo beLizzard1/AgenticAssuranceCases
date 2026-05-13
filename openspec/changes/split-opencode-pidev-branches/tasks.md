@@ -4,14 +4,14 @@ This section lists the implementation steps required to make the branch-split po
 
 1. Audit repository for agent-specific artifacts
 
-- [ ] Audit the repository and produce a list of agent-specific files with suggested ownership (opencode or pidev)
+- [x] Audit the repository and produce a list of agent-specific files with suggested ownership (opencode or pidev)
   - Owner: repo maintainers
-  - Output: list of files with suggested agent ownership (opencode or pidev)
+  - Output: openspec/changes/split-opencode-pidev-branches/audit-agent-files.md
 
 2. Create long-lived branches
 
-- [ ] Create `opencode` branch and push to origin
-- [ ] Create `pidev` branch and push to origin
+- [x] Create `opencode` branch and push to origin
+- [x] Create `pidev` branch and push to origin
   - Owner: repo maintainers
   - Steps:
     - git checkout -b opencode
