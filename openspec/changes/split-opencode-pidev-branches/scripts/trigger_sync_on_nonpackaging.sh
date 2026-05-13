@@ -65,16 +65,69 @@ $(printf '%s
 
 Suggested actions:
 1. Review the changes and apply the same modifications to the other branches (opencode, pidev) unless they are packaging-only.
-2. Consider opening sync PRs from the branch containing the change to the other branches (e.g., create branch `sync/<target>/<short>` and cherry-pick or apply the patch).
-
-If you'd like automatic PR creation, configure the repo CI with a write token and update the sync script to create PRs.
+2. This CI may attempt to create sync PRs automatically (if GITHUB_TOKEN is provided and changes apply cleanly).
 
 This issue was created automatically by branch-split validation.
 EOF
 )
 
-echo "Creating issue on $API_URL"
-curl -s -S -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "{\"title\": \"${TITLE}\", \"body\": \"${BODY//$'\n'/\\n}\", \"labels\": [\"branch-sync-needed\"]}" $API_URL
+if [ -z "${GITHUB_TOKEN:-}" ]; then
+  echo "GITHUB_TOKEN not available; creating issue only."
+  curl -s -S -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "{\"title\": \"${TITLE}\", \"body\": \"${BODY//$'\n'/\\n}\", \"labels\": [\"branch-sync-needed\"]}" $API_URL || true
+  echo "Done (no token for PR creation)."
+  exit 0
+fi
 
-echo "Issue created (if API permitted)."
+echo "Creating issue on $API_URL"
+curl -s -S -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "{\"title\": \"${TITLE}\", \"body\": \"${BODY//$'\n'/\\n}\", \"labels\": [\"branch-sync-needed\"]}" $API_URL || true
+
+echo "Attempting automatic sync PR creation"
+
+# Create PRs to other agent branches where applicable
+TARGET_BRANCHES=(opencode pidev)
+SHORT_SHA=$(echo "${GITHUB_SHA:-$(git rev-parse --short HEAD)}")
+
+ORIGIN_REMOTE="https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
+
+PATCH_FILE=$(mktemp)
+git diff origin/$BASE_REF...HEAD > "$PATCH_FILE"
+
+for target in "${TARGET_BRANCHES[@]}"; do
+  if [ "$target" = "$HEAD_REF" ] || [ "$target" = "${GITHUB_REF##*/}" ]; then
+    echo "Skipping target $target (same as head)"
+    continue
+  fi
+
+  echo "Preparing sync branch for target: $target"
+  SYNC_BRANCH="sync/${target}/${SHORT_SHA}"
+
+  # fetch target and create a new branch from it
+  git fetch origin $target --quiet || { echo "Failed to fetch origin/$target"; continue; }
+  git checkout -b "$SYNC_BRANCH" origin/$target || { echo "Failed to checkout origin/$target"; continue; }
+
+  # try to apply patch
+  if git apply --index "$PATCH_FILE" --3way; then
+    git commit -m "chore(sync): apply non-packaging changes from ${HEAD_REF:-$GITHUB_REF} to ${target}" || true
+    # push the sync branch
+    if git push "$ORIGIN_REMOTE" HEAD:"$SYNC_BRANCH"; then
+      # create PR
+      PR_TITLE="chore(sync): sync non-packaging changes to $target"
+      PR_BODY="This PR was created automatically to propagate non-packaging changes from ${HEAD_REF:-$GITHUB_REF} to ${target}. Please review."
+      API_PR_URL="https://api.github.com/repos/$REPO/pulls"
+      curl -s -S -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "{\"title\": \"${PR_TITLE}\", \"head\": \"${SYNC_BRANCH}\", \"base\": \"${target}\", \"body\": \"${PR_BODY}\"}" $API_PR_URL || true
+      echo "Created PR for $target from $SYNC_BRANCH"
+    else
+      echo "Push failed for $SYNC_BRANCH; skipping PR creation"
+    fi
+  else
+    echo "Patch could not be applied cleanly to $target; skipping automatic PR creation. Manual intervention required."
+  fi
+
+  # return to head ref
+  git checkout - >/dev/null 2>&1 || true
+done
+
+rm -f "$PATCH_FILE"
+
+echo "Done."
 exit 0
