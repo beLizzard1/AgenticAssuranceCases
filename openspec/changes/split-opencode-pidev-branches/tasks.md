@@ -31,6 +31,11 @@ Implementation checklist for change: split-opencode-pidev-branches
 - [x] Add branch-aware workflows that run the validation script on PRs
 - [ ] Ensure PRs to master run the validation script to prevent agent-specific files landing in master (workflow needs to be present on master)
 
+9. Skills and docs consistency
+
+- [x] Add skills/docs consistency check script
+- [ ] Ensure CI enforces skills/docs consistency (make the check fail the workflow unless a documented rationale exists)
+
 7. Create CODEOWNERS and branch protection rules
 
 - [ ] Add CODEOWNERS entries for `agents/opencode/` and `agents/pidev/`
