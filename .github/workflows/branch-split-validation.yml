@@ -18,3 +18,8 @@ jobs:
       - name: Skills consistency check
         run: |
           bash openspec/changes/split-opencode-pidev-branches/scripts/check-skills-consistency.sh || true
+      - name: Trigger sync check for non-packaging changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash openspec/changes/split-opencode-pidev-branches/scripts/trigger_sync_on_nonpackaging.sh || true
