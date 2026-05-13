@@ -1,0 +1,21 @@
+name: Propagate master non-packaging changes
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  propagate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Propagate non-packaging changes to agent branches
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: |
+          bash openspec/changes/split-opencode-pidev-branches/scripts/trigger_sync_on_nonpackaging.sh || true
