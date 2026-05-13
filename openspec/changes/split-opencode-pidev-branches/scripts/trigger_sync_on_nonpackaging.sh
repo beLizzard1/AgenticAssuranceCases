@@ -50,15 +50,40 @@ if [ "$is_nonpack" -eq 0 ]; then
   exit 0
 fi
 
-if [ -z "${GITHUB_TOKEN:-}" ]; then
-  echo "GITHUB_TOKEN not available; cannot create issue. Please enable GITHUB_TOKEN in workflow."
+# If this is a PR/branch on an agent branch (non-master), create a promotion PR from the agent branch to master
+if [ -n "${HEAD_REF:-}" ] && [ "${HEAD_REF}" != "master" ]; then
+  if [ -z "${GITHUB_TOKEN:-}" ]; then
+    echo "GITHUB_TOKEN not available; creating issue only."
+    API_URL="https://api.github.com/repos/$REPO/issues"
+    TITLE="Branch promotion requested: non-packaging changes detected on ${HEAD_REF} (${GITHUB_SHA:-unknown})"
+    BODY=$(cat <<EOF
+Non-packaging changes were detected on branch ${HEAD_REF} and a promotion to master is suggested.
+
+Modified files:
+$(printf '%s
+
+Please review and decide whether to merge to master.
+EOF
+)
+    curl -s -S -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "{\"title\": \"${TITLE}\", \"body\": \"${BODY//$'\n'/\\n}\", \"labels\": [\"branch-promotion\"]}" $API_URL || true
+    exit 0
+  fi
+
+  echo "Creating promotion PR from ${HEAD_REF} -> master"
+  API_PR_URL="https://api.github.com/repos/$REPO/pulls"
+  PR_TITLE="proposed(promotion): promote ${HEAD_REF} non-packaging changes to master"
+  PR_BODY="This PR proposes to promote non-packaging changes from ${HEAD_REF} to master. Please review and merge on master if acceptable. Modified files:\n$(printf '%s\n' "$MODIFIED")"
+  curl -s -S -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "{\"title\": \"${PR_TITLE}\", \"head\": \"${HEAD_REF}\", \"base\": \"master\", \"body\": \"${PR_BODY//$'\n'/\\n}\"}" $API_PR_URL || true
+
+  echo "Promotion PR created (if permissions allowed)."
   exit 0
 fi
 
+# Otherwise (e.g., we are running on master push or no HEAD_REF), create an issue and attempt propagation
 API_URL="https://api.github.com/repos/$REPO/issues"
 TITLE="Branch sync required: non-packaging changes detected (${GITHUB_SHA:-unknown})"
 BODY=$(cat <<EOF
-Non-packaging changes were detected in this PR/commit and should be propagated to other branches (opencode and pidev).
+Non-packaging changes were detected in this commit and should be propagated to other branches (opencode and pidev).
 
 Modified files:
 $(printf '%s
@@ -70,13 +95,6 @@ Suggested actions:
 This issue was created automatically by branch-split validation.
 EOF
 )
-
-if [ -z "${GITHUB_TOKEN:-}" ]; then
-  echo "GITHUB_TOKEN not available; creating issue only."
-  curl -s -S -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "{\"title\": \"${TITLE}\", \"body\": \"${BODY//$'\n'/\\n}\", \"labels\": [\"branch-sync-needed\"]}" $API_URL || true
-  echo "Done (no token for PR creation)."
-  exit 0
-fi
 
 echo "Creating issue on $API_URL"
 curl -s -S -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" -d "{\"title\": \"${TITLE}\", \"body\": \"${BODY//$'\n'/\\n}\", \"labels\": [\"branch-sync-needed\"]}" $API_URL || true
