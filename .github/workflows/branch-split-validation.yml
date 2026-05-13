@@ -15,3 +15,6 @@ jobs:
       - name: Run branch-split validation
         run: |
           bash openspec/changes/split-opencode-pidev-branches/scripts/validate-branch-split.sh "$GITHUB_HEAD_REF" || exit 1
+      - name: Skills consistency check
+        run: |
+          bash openspec/changes/split-opencode-pidev-branches/scripts/check-skills-consistency.sh || true
