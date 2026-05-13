@@ -56,6 +56,7 @@ To make the policy effective, enforce it at three levels:
 
 - openspec validation: Add a ruleset or validation hooks in the repository's OpenSpec configuration so that `openspec` commands can detect policy violations (e.g., agent files modified in master). This may be implemented as extra spec checks or a validation script invoked by openspec tooling.
 - agents.md: Add a top-level `agents.md` (or `docs/agents.md`) that documents the policy, agent directory layout, and examples. This file will be referenced by CI and by developer onboarding.
+- Skills: Ensure `.opencode/skills/` documentation is synchronized across branches (these files describe available skills/agents). If packaging differences are required, document them in `agents.md`.
 - GitHub CI rules: Add branch-aware workflows and a lightweight validation step (script) that runs on PRs to master and agent branches. The validation step should fail the PR if files violating the branch-split policy are detected.
 
 These enforcement mechanisms together reduce accidental policy violations and make the workflow discoverable for developers.
