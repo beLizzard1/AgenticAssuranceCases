@@ -1,0 +1,385 @@
+<?xml version='1.0' encoding='utf-8'?>
+<asce-network version="1.0">
+  <general>
+    <project-version />
+    <project-name />
+    <project-description />
+    <project-author />
+    <interpretation-schema>ASCAD 2.0</interpretation-schema>
+    <canvas-units>twips</canvas-units>
+    <asce-password-read />
+    <asce-password />
+    <tool-version>5.1.2</tool-version>
+    <font name="Tahoma" size="9pt" />
+    <manual-attach>False</manual-attach>
+  </general>
+  <nodes>
+    <node reference="N22712272">
+      <layout x="13860" y="30241" height="4320" width="4320" />
+      <type>3</type>
+      <user-id>E1.1.1</user-id>
+      <user-title>Traffic Logs IP </user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Off</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N25998670">
+      <layout x="2160" y="20161" height="4320" width="4320" />
+      <type>1</type>
+      <user-id>C3.1.1.1.3</user-id>
+      <user-title>The EEA cloud infrastructure technically prevents out-of-region egress or replication.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Low</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N29204280">
+      <layout x="11520" y="1" height="4320" width="4320" />
+      <type>1</type>
+      <user-id>C3</user-id>
+      <user-title>GDPR-protected data does not leave the EEA.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Off</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N37134808">
+      <layout x="6840" y="20161" height="4320" width="4320" />
+      <type>6</type>
+      <user-id>S3.1.1.1.2</user-id>
+      <user-title>The identified architectural components (First Hop, Cloud Core, and Vendor APIs) represent the complete, collectively exhaustive lifecycle of the data. Therefore, if the data is contained within the EEA at each of these isolated stages, the overarching system guarantees the data never leaves the EEA.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Low</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N5931544">
+      <layout x="11520" y="20161" height="4320" width="4320" />
+      <type>1</type>
+      <user-id>C3.1.1.1.4</user-id>
+      <user-title>All integrated third-party sub-processors process and retain data strictly within the EEA.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Low</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N59705532">
+      <layout x="16200" y="20161" height="4320" width="4320" />
+      <type>1</type>
+      <user-id>C3.1.1.1.1</user-id>
+      <user-title>Audited first-hop vehicle traffic routed only to EEA-based network endpoints.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation">MCP Fingerprint: asce_parser_v1.0.3_abc123
+Model: gpt-5.4-mini
+Timestamp: 2026-05-14T08:54:01.419101Z
+Input Hash: sha256:5e6afbac1262c7e2f70862872a592381982fec6b699231d14336063037576140</status-field>
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Medium</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    <annotation>Audited destination-IP checks for first-hop vehicle traffic found routing only to EEA-based network endpoints during the assessed period.</annotation></node>
+    <node reference="N61601280">
+      <layout x="16200" y="25201" height="4320" width="4320" />
+      <type>2</type>
+      <user-id>A1.1</user-id>
+      <user-title>We checked the Destination IP addresses, of traffic coming from the vehicle</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Medium</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N62870592">
+      <layout x="11520" y="5041" height="4320" width="4320" />
+      <type>2</type>
+      <user-id>A3.1</user-id>
+      <user-title>We prove this by demonstrating a broader physical property: the containment of all vehicle data.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Off</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N65646408">
+      <layout x="9180" y="15121" height="4320" width="4320" />
+      <type>2</type>
+      <user-id>A3.1.1.1</user-id>
+      <user-title>Decomposition based on showing that the data is geographically contained across all architectural components of the processing pipeline.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Low</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N85528792">
+      <layout x="13860" y="10081" height="4320" width="4320" />
+      <type>6</type>
+      <user-id>S3.1.2</user-id>
+      <user-title>All GDPR-protected data is a strict subset of the general vehicle data stream. Therefore, containing 100% of the vehicle data inherently guarantees the containment of 100% of the GDPR data.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">High</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N92640552">
+      <layout x="18540" y="30241" height="4320" width="4320" />
+      <type>6</type>
+      <user-id>S1.1.2</user-id>
+      <user-title>Geolookup Database is accurate</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Medium</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N95818720">
+      <layout x="9180" y="10081" height="4320" width="4320" />
+      <type>1</type>
+      <user-id>C3.1.1</user-id>
+      <user-title>All vehicle data (regardless of payload classification) does not leave the EEA.</user-title>
+      <status-fields>
+        <status-field type="string" name="annotation" />
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Low</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+&lt;p&gt;&amp;nbsp;&lt;/p&gt;
+</html-annotation>
+    </node>
+    <node reference="N95818721">
+      <layout x="13860" y="35281" height="4320" width="4320" />
+      <type>8</type>
+      <user-id>N95818721</user-id>
+      <user-title>Destination-IP inspection misses non-traffic egress paths</user-title>
+      <status-fields>
+        <status-field type="boolean" name="addressed">False</status-field>
+        <status-field type="string" name="annotation">Unless the inspection also covered control-plane, storage, backup, and replication channels, checking destination IPs of vehicle traffic does not establish that data cannot leave the EEA.</status-field>
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Off</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+Unless the inspection also covered control-plane, storage, backup, and replication channels, checking destination IPs of vehicle traffic does not establish that data cannot leave the EEA.
+</html-annotation>
+    </node>
+    <node reference="N95818722">
+      <layout x="6840" y="25201" height="4320" width="4320" />
+      <type>8</type>
+      <user-id>N95818722</user-id>
+      <user-title>Architecture list is not collectively exhaustive</user-title>
+      <status-fields>
+        <status-field type="boolean" name="addressed">False</status-field>
+        <status-field type="string" name="annotation">Unless the architecture inventory also covers management-plane, logging, backup, telemetry, and other vendor-side export paths, the listed stages are not collectively exhaustive and cannot support the conclusion that data never leaves the EEA.</status-field>
+        <status-field type="string" name="audited" />
+        <status-field type="boolean" name="completed">False</status-field>
+        <status-field type="boolean" name="hasexternalreference">False</status-field>
+        <status-field type="string" name="confidence">Off</status-field>
+        <status-field type="string" name="spectrum1">Off</status-field>
+        <status-field type="string" name="spectrum2">Off</status-field>
+        <status-field type="string" name="continues">Off</status-field>
+      </status-fields>
+      <html-annotation>
+Unless the architecture inventory also covers management-plane, logging, backup, telemetry, and other vendor-side export paths, the listed stages are not collectively exhaustive and cannot support the conclusion that data never leaves the EEA.
+</html-annotation>
+    </node>
+  <node reference="N95818723" bootstrap-role="context"><type>9</type><user-id>N95818723</user-id><user-title>Assurance scope and boundary</user-title><html-annotation>This case evaluates whether vehicle-generated GDPR-protected data remains within the EEA for the assessed first-hop routing and downstream cloud/vendor processing during the observed period.</html-annotation><layout x="15520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">This case evaluates whether vehicle-generated GDPR-protected data remains within the EEA for the assessed first-hop routing and downstream cloud/vendor processing during the observed period.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818724" bootstrap-role="assumption"><type>9</type><user-id>N95818724</user-id><user-title>Assessed controls reflect the relevant period</user-title><html-annotation>The audited destination-IP checks and geolocation controls reflect the relevant operational period; configuration changes outside the assessment window are out of scope.</html-annotation><layout x="15520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">The audited destination-IP checks and geolocation controls reflect the relevant operational period; configuration changes outside the assessment window are out of scope.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818725" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818725</user-id><user-title>Evidence required: third-party subprocessor data residency controls</user-title><html-annotation>Need vendor contracts, architecture records, or audit evidence showing each integrated subprocessor processes and retains data within the EEA.</html-annotation><layout x="15520" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need vendor contracts, architecture records, or audit evidence showing each integrated subprocessor processes and retains data within the EEA.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818726" bootstrap-role="claim"><type>1</type><user-id>N95818726</user-id><user-title>Control-plane operations that can move data are restricted to EEA-based endpoints.</user-title><html-annotation>This branch covers management and control-plane actions that could indirectly cause export, replication, or reconfiguration of data paths.</html-annotation><layout x="6160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">This branch covers management and control-plane actions that could indirectly cause export, replication, or reconfiguration of data paths.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818727" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818727</user-id><user-title>Evidence required: control-plane routing and export restrictions</user-title><html-annotation>Need configuration, IAM, network policy, or audit evidence showing control-plane and management actions cannot direct data or replicas outside the EEA.</html-annotation><layout x="6160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need configuration, IAM, network policy, or audit evidence showing control-plane and management actions cannot direct data or replicas outside the EEA.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818728" bootstrap-role="assumption"><type>9</type><user-id>N95818728</user-id><user-title>Control-plane scope is included in the reviewed architecture</user-title><html-annotation>The architecture review includes management, orchestration, and control-plane paths that can affect data routing or replication.</html-annotation><layout x="6160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">The architecture review includes management, orchestration, and control-plane paths that can affect data routing or replication.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818729" bootstrap-role="claim"><type>1</type><user-id>N95818729</user-id><user-title>Administrative and IAM permissions cannot create non-EEA data paths.</user-title><html-annotation>Control-plane authorization is constrained so administrators cannot create or widen data paths outside the EEA.</html-annotation><layout x="10160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Control-plane authorization is constrained so administrators cannot create or widen data paths outside the EEA.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818730" bootstrap-role="claim"><type>1</type><user-id>N95818730</user-id><user-title>Network and orchestration policies enforce EEA-only control paths.</user-title><html-annotation>Control-plane network policy and orchestration settings prevent managed actions from directing data or replicas outside the EEA.</html-annotation><layout x="10160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Control-plane network policy and orchestration settings prevent managed actions from directing data or replicas outside the EEA.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818731" bootstrap-role="claim"><type>1</type><user-id>N95818731</user-id><user-title>Control-plane activity remained EEA-only during the assessed period.</user-title><html-annotation>Observed control-plane and management activity did not direct data or replicas outside the EEA during the assessment window.</html-annotation><layout x="10160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Observed control-plane and management activity did not direct data or replicas outside the EEA during the assessment window.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818732" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818732</user-id><user-title>Evidence required: IAM and admin-role restrictions</user-title><html-annotation>Need IAM, role, or privilege evidence showing administrators cannot create non-EEA data paths or replication targets.</html-annotation><layout x="10160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need IAM, role, or privilege evidence showing administrators cannot create non-EEA data paths or replication targets.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818733" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818733</user-id><user-title>Evidence required: control-plane policy enforcement</user-title><html-annotation>Need network policy, orchestration, or config evidence showing control-plane actions are constrained to EEA-based endpoints.</html-annotation><layout x="10160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need network policy, orchestration, or config evidence showing control-plane actions are constrained to EEA-based endpoints.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818734" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818734</user-id><user-title>Evidence required: control-plane audit logs</user-title><html-annotation>Need audit logs showing control-plane activity during the assessed period did not direct data or replicas outside the EEA.</html-annotation><layout x="10160" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need audit logs showing control-plane activity during the assessed period did not direct data or replicas outside the EEA.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818735" bootstrap-role="claim"><type>1</type><user-id>N95818735</user-id><user-title>Integrated third-party sub-processors are contractually constrained to EEA processing.</user-title><html-annotation>Third-party contracts and data-processing terms require EEA-only processing and retention for integrated subprocessors.</html-annotation><layout x="15520" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Third-party contracts and data-processing terms require EEA-only processing and retention for integrated subprocessors.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818736" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818736</user-id><user-title>Evidence required: subprocessor contracts and DPAs</user-title><html-annotation>Need contract, DPA, or procurement evidence showing integrated subprocessors are bound to EEA processing/retention terms.</html-annotation><layout x="15520" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need contract, DPA, or procurement evidence showing integrated subprocessors are bound to EEA processing/retention terms.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818737" bootstrap-role="claim"><type>1</type><user-id>N95818737</user-id><user-title>The reviewed architecture includes management, orchestration, and control-plane paths.</user-title><html-annotation>The assessed architecture inventory explicitly includes the non-data-plane paths that can affect routing, replication, or export.</html-annotation><layout x="10840" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">The assessed architecture inventory explicitly includes the non-data-plane paths that can affect routing, replication, or export.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818738" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818738</user-id><user-title>Evidence required: architecture diagrams and exception review</user-title><html-annotation>Need architecture diagrams, data-flow records, or exception review showing control-plane paths were included in the assessed lifecycle.</html-annotation><layout x="10840" y="20161" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need architecture diagrams, data-flow records, or exception review showing control-plane paths were included in the assessed lifecycle.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818739" bootstrap-role="claim"><type>1</type><user-id>N95818739</user-id><user-title>First-hop vehicle traffic stays on EEA-based endpoints.</user-title><html-annotation>Branch for destination-IP / route inspection of vehicle-originating traffic within the assessed period.</html-annotation><layout x="15520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Branch for destination-IP / route inspection of vehicle-originating traffic within the assessed period.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818740" bootstrap-role="claim"><type>1</type><user-id>N95818740</user-id><user-title>Cloud and control-plane paths cannot export or replicate data outside the EEA.</user-title><html-annotation>Branch for management, orchestration, IAM, network-policy, and audit controls that could move data indirectly.</html-annotation><layout x="15520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Branch for management, orchestration, IAM, network-policy, and audit controls that could move data indirectly.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818741" bootstrap-role="claim"><type>1</type><user-id>N95818741</user-id><user-title>Integrated third-party sub-processors are constrained to EEA-only processing.</user-title><html-annotation>Branch for contractual and operational controls over integrated subprocessors.</html-annotation><layout x="15520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Branch for contractual and operational controls over integrated subprocessors.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818742" bootstrap-role="claim"><type>1</type><user-id>N95818742</user-id><user-title>The assessed architecture is complete for relevant data-exit paths.</user-title><html-annotation>Branch for architecture completeness across management-plane, logging, backup, telemetry, and other vendor-side export paths.</html-annotation><layout x="15520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Branch for architecture completeness across management-plane, logging, backup, telemetry, and other vendor-side export paths.</status-field><status-field name="confidence" type="string">Medium</status-field></status-fields></node><node reference="N95818743" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818743</user-id><user-title>Evidence required: destination-IP / route inspection</user-title><html-annotation>Need destination-IP logs, route tables, or equivalent network evidence showing vehicle-originating traffic only reached EEA-based endpoints during the assessed period.</html-annotation><layout x="19520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need destination-IP logs, route tables, or equivalent network evidence showing vehicle-originating traffic only reached EEA-based endpoints during the assessed period.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818744" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818744</user-id><user-title>Evidence required: control-plane export restrictions</user-title><html-annotation>Need IAM, orchestration, network-policy, configuration, or audit evidence showing control-plane actions cannot create non-EEA data paths or replication targets.</html-annotation><layout x="19520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need IAM, orchestration, network-policy, configuration, or audit evidence showing control-plane actions cannot create non-EEA data paths or replication targets.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818745" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818745</user-id><user-title>Evidence required: subprocessor contracts and DPAs</user-title><html-annotation>Need contracts, DPAs, procurement records, or audit evidence showing integrated subprocessors are bound to EEA-only processing and retention.</html-annotation><layout x="19520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need contracts, DPAs, procurement records, or audit evidence showing integrated subprocessors are bound to EEA-only processing and retention.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node><node reference="N95818746" bootstrap-role="evidence-placeholder" bootstrap-placeholder="true"><type>3</type><user-id>N95818746</user-id><user-title>Evidence required: architecture completeness review</user-title><html-annotation>Need architecture diagrams, data-flow records, or exception review showing management-plane, logging, backup, telemetry, and other export paths were included in scope.</html-annotation><layout x="19520" y="1" height="4320" width="4320" /><status-fields><status-field name="annotation" type="string">Need architecture diagrams, data-flow records, or exception review showing management-plane, logging, backup, telemetry, and other export paths were included in scope.</status-field><status-field name="confidence" type="string">Low</status-field></status-fields></node></nodes>
+  <links>
+    <link reference="LN22712272N61601280">
+      <type>3</type>
+      <strength>1</strength>
+      <source-reference>N22712272</source-reference>
+      <destination-reference>N61601280</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN25998670N65646408">
+      <type>1</type>
+      <strength>1</strength>
+      <source-reference>N25998670</source-reference>
+      <destination-reference>N65646408</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN37134808N65646408">
+      <type>4</type>
+      <strength>1</strength>
+      <source-reference>N37134808</source-reference>
+      <destination-reference>N65646408</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN5931544N65646408">
+      <type>1</type>
+      <strength>1</strength>
+      <source-reference>N5931544</source-reference>
+      <destination-reference>N65646408</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN59705532N65646408">
+      <type>1</type>
+      <strength>1</strength>
+      <source-reference>N59705532</source-reference>
+      <destination-reference>N65646408</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN61601280N59705532">
+      <type>2</type>
+      <strength>1</strength>
+      <source-reference>N61601280</source-reference>
+      <destination-reference>N59705532</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN62870592N29204280">
+      <type>2</type>
+      <strength>1</strength>
+      <source-reference>N62870592</source-reference>
+      <destination-reference>N29204280</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN65646408N95818720">
+      <type>2</type>
+      <strength>1</strength>
+      <source-reference>N65646408</source-reference>
+      <destination-reference>N95818720</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN85528792N62870592">
+      <type>4</type>
+      <strength>1</strength>
+      <source-reference>N85528792</source-reference>
+      <destination-reference>N62870592</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN92640552N61601280">
+      <type>4</type>
+      <strength>1</strength>
+      <source-reference>N92640552</source-reference>
+      <destination-reference>N61601280</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LN95818720N62870592">
+      <type>1</type>
+      <strength>1</strength>
+      <source-reference>N95818720</source-reference>
+      <destination-reference>N62870592</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LNN95818721N22712272">
+      <type>5</type>
+      <strength>1</strength>
+      <source-reference>N95818721</source-reference>
+      <destination-reference>N22712272</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+    <link reference="LNN95818722N37134808">
+      <type>5</type>
+      <strength>1</strength>
+      <source-reference>N95818722</source-reference>
+      <destination-reference>N37134808</destination-reference>
+      <attachment x-source="0" y-source="0" x-destination="0" y-destination="0" />
+    </link>
+  <link reference="LNN29204280N95818723"><type>7</type><strength>1</strength><source-reference>N29204280</source-reference><destination-reference>N95818723</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN29204280N95818724"><type>2</type><strength>1</strength><source-reference>N29204280</source-reference><destination-reference>N95818724</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN5931544N95818725"><type>3</type><strength>1</strength><source-reference>N5931544</source-reference><destination-reference>N95818725</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN25998670N95818726"><type>1</type><strength>1</strength><source-reference>N25998670</source-reference><destination-reference>N95818726</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN25998670N95818727"><type>1</type><strength>1</strength><source-reference>N25998670</source-reference><destination-reference>N95818727</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN25998670N95818728"><type>2</type><strength>1</strength><source-reference>N25998670</source-reference><destination-reference>N95818728</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818726N95818729"><type>1</type><strength>1</strength><source-reference>N95818726</source-reference><destination-reference>N95818729</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818726N95818730"><type>1</type><strength>1</strength><source-reference>N95818726</source-reference><destination-reference>N95818730</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818726N95818731"><type>1</type><strength>1</strength><source-reference>N95818726</source-reference><destination-reference>N95818731</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818726N95818732"><type>2</type><strength>1</strength><source-reference>N95818726</source-reference><destination-reference>N95818732</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818726N95818733"><type>2</type><strength>1</strength><source-reference>N95818726</source-reference><destination-reference>N95818733</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818726N95818734"><type>2</type><strength>1</strength><source-reference>N95818726</source-reference><destination-reference>N95818734</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN5931544N95818735"><type>1</type><strength>1</strength><source-reference>N5931544</source-reference><destination-reference>N95818735</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN5931544N95818736"><type>2</type><strength>1</strength><source-reference>N5931544</source-reference><destination-reference>N95818736</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN37134808N95818737"><type>1</type><strength>1</strength><source-reference>N37134808</source-reference><destination-reference>N95818737</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN37134808N95818738"><type>2</type><strength>1</strength><source-reference>N37134808</source-reference><destination-reference>N95818738</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN29204280N95818739"><type>2</type><strength>1</strength><source-reference>N29204280</source-reference><destination-reference>N95818739</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN29204280N95818740"><type>2</type><strength>1</strength><source-reference>N29204280</source-reference><destination-reference>N95818740</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN29204280N95818741"><type>2</type><strength>1</strength><source-reference>N29204280</source-reference><destination-reference>N95818741</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN29204280N95818742"><type>2</type><strength>1</strength><source-reference>N29204280</source-reference><destination-reference>N95818742</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818739N95818743"><type>3</type><strength>1</strength><source-reference>N95818739</source-reference><destination-reference>N95818743</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818740N95818744"><type>3</type><strength>1</strength><source-reference>N95818740</source-reference><destination-reference>N95818744</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818741N95818745"><type>3</type><strength>1</strength><source-reference>N95818741</source-reference><destination-reference>N95818745</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link><link reference="LNN95818742N95818746"><type>3</type><strength>1</strength><source-reference>N95818742</source-reference><destination-reference>N95818746</destination-reference><attachment x-source="0" y-source="0" x-destination="0" y-destination="0" /></link></links>
+  <views />
+  <embedded-images />
+  <export-paths />
+</asce-network>

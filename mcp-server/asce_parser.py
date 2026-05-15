@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+from collections import Counter, defaultdict
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -55,6 +56,78 @@ TYPE_CODE_MAP = {
 
 NODE_TYPE_CODE_MAP = {value: key for key, value in TYPE_CODE_MAP.items()}
 
+ABSTRACTION_LAYERS = ("Component", "Functional Cluster", "System", "Scenario")
+ASSURANCE_STATES = ("Claim", "Strategy", "Context", "Unsupported Gap")
+
+_ABSTRACTION_LAYER_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "Scenario": (
+        "scenario",
+        "adversarial",
+        "attack",
+        "red-team",
+        "red team",
+        "degraded",
+        "failover",
+        "recovery",
+        "odd",
+        "operational design domain",
+        "field",
+        "real-world",
+        "stress",
+    ),
+    "Functional Cluster": (
+        "cluster",
+        "subsystem",
+        "sub-system",
+        "zone",
+        "conduit",
+        "control loop",
+        "hmi",
+        "gateway",
+        "integration",
+        "interaction",
+        "boundary",
+        "trust boundary",
+    ),
+    "Component": (
+        "component",
+        "module",
+        "interface",
+        "sensor",
+        "actuator",
+        "firmware",
+        "software",
+        "hardware",
+        "driver",
+        "api",
+        "endpoint",
+        "unit",
+        "function",
+        "class",
+        "method",
+    ),
+    "System": (
+        "system",
+        "end-to-end",
+        "end to end",
+        "workflow",
+        "orchestration",
+        "platform",
+        "architecture",
+        "runtime",
+        "lifecycle",
+        "whole-system",
+        "whole system",
+    ),
+}
+
+_ASSURANCE_STATE_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "Unsupported Gap": ("unsupported", "gap", "defeater", "evidence-placeholder", "evidence gap"),
+    "Context": ("context", "assumption", "evidence", "evidence-placeholder", "comment"),
+    "Strategy": ("argument", "strategy", "decomposition"),
+    "Claim": ("claim", "goal", "subcase", "side-claim"),
+}
+
 
 def _local_name(tag: str) -> str:
     if tag.startswith("{"):
@@ -84,6 +157,84 @@ def _normalize_capabilities(capabilities: Any) -> list[str]:
         if text:
             normalized.append(text)
     return sorted(set(normalized))
+
+
+def _classification_haystack(*values: Any) -> str:
+    return " ".join(_normalize_text(value).lower() for value in values if _normalize_text(value))
+
+
+def _classify_abstraction_layer(data: dict[str, Any]) -> str:
+    haystack = _classification_haystack(
+        data.get("title"),
+        data.get("annotation"),
+        data.get("text"),
+        data.get("type"),
+        data.get("path"),
+        data.get("bootstrap-role"),
+        *(data.get("attributes", {}) or {}).values(),
+        *(data.get("status_fields", {}) or {}).values(),
+    )
+
+    if any(keyword in haystack for keyword in _ABSTRACTION_LAYER_KEYWORDS["Scenario"]):
+        return "Scenario"
+    if any(keyword in haystack for keyword in _ABSTRACTION_LAYER_KEYWORDS["Functional Cluster"]):
+        return "Functional Cluster"
+    if any(keyword in haystack for keyword in _ABSTRACTION_LAYER_KEYWORDS["Component"]):
+        if not any(keyword in haystack for keyword in _ABSTRACTION_LAYER_KEYWORDS["System"]):
+            return "Component"
+    if any(keyword in haystack for keyword in _ABSTRACTION_LAYER_KEYWORDS["System"]):
+        return "System"
+
+    node_type = _normalize_text(data.get("type")).lower()
+    if node_type in {"evidence", "comment", "defeater"}:
+        return "Component"
+    return "System"
+
+
+def _classify_assurance_state(data: dict[str, Any]) -> str:
+    haystack = _classification_haystack(
+        data.get("title"),
+        data.get("annotation"),
+        data.get("text"),
+        data.get("type"),
+        data.get("bootstrap-role"),
+        *(data.get("attributes", {}) or {}).values(),
+        *(data.get("status_fields", {}) or {}).values(),
+    )
+
+    for state in ASSURANCE_STATES[::-1]:
+        if any(keyword in haystack for keyword in _ASSURANCE_STATE_KEYWORDS[state]):
+            return state
+
+    node_type = _normalize_text(data.get("type")).lower()
+    if node_type in {"argument"}:
+        return "Strategy"
+    if node_type in {"claim", "side-claim", "subcase"}:
+        return "Claim"
+    if node_type in {"comment", "evidence"}:
+        return "Context"
+    return "Context"
+
+
+def _layered_gap_breakdown(gaps: list[dict[str, Any]]) -> dict[str, Any]:
+    grouped: dict[str, list[dict[str, Any]]] = {layer: [] for layer in ABSTRACTION_LAYERS}
+    for gap in gaps:
+        layer = _normalize_text(gap.get("abstraction_layer")) or "System"
+        grouped.setdefault(layer, []).append(gap)
+
+    counts = {layer: len(grouped.get(layer, [])) for layer in ABSTRACTION_LAYERS}
+    total = sum(counts.values())
+    return {
+        "total": total,
+        "layer_counts": counts,
+        "gaps_by_layer": grouped,
+    }
+
+
+def _layered_gap_summary_text(gaps: list[dict[str, Any]]) -> str:
+    breakdown = _layered_gap_breakdown(gaps)
+    parts = [f"{layer}={breakdown['layer_counts'].get(layer, 0)}" for layer in ABSTRACTION_LAYERS]
+    return f"Layered gap analysis: {', '.join(parts)}."
 
 
 def _schema_node_type_code(node_type: str) -> str:
@@ -287,6 +438,63 @@ def load_schema_metadata() -> dict[str, Any]:
         }
 
     return metadata
+
+
+def _schema_enum_values(schema: dict[str, Any], field_name: str) -> tuple[str, ...]:
+    field = schema.get("status_fields", {}).get(_normalize_text(field_name).lower())
+    if not field:
+        return ()
+
+    enumlist = _normalize_text(field.get("enumlist"))
+    if not enumlist:
+        return ()
+
+    return tuple(value for value in (_normalize_text(item) for item in enumlist.split(",")) if value)
+
+
+def _schema_status_value(field_name: str, value: Any, schema: dict[str, Any] | None = None) -> str:
+    normalized = _normalize_text(value)
+    if not normalized:
+        return normalized
+
+    schema = schema or load_schema_metadata()
+    enum_values = _schema_enum_values(schema, field_name)
+    if not enum_values:
+        return normalized
+
+    for candidate in enum_values:
+        if normalized.lower() == candidate.lower():
+            return candidate
+
+    return normalized
+
+
+def _validate_schema_status_fields(root: ET.Element, schema: dict[str, Any]) -> None:
+    enum_fields = schema.get("status_fields", {})
+    if not enum_fields:
+        return
+
+    allowed_values = {
+        field_name.lower(): _schema_enum_values(schema, field_name)
+        for field_name, field_data in enum_fields.items()
+        if _schema_enum_values(schema, field_name)
+    }
+
+    if not allowed_values:
+        return
+
+    for node in root.findall(".//node"):
+        node_id = _normalize_text(node.attrib.get("reference") or _element_id(node, "node"))
+        status_fields = _extract_status_fields(node, schema)
+        for field_name, value in status_fields.items():
+            allowed = allowed_values.get(field_name.lower())
+            if not allowed:
+                continue
+            if value not in allowed:
+                expected = ", ".join(allowed)
+                raise ValueError(
+                    f"Invalid value {value!r} for status field {field_name!r} on node {node_id or 'unknown'}; expected one of: {expected}"
+                )
 
 
 def _schema_type_name(node: ET.Element) -> str:
@@ -770,6 +978,8 @@ def _node_payload(node_id: str, data: dict[str, Any]) -> dict[str, Any]:
         "text": data.get("text"),
         "attributes": data.get("attributes", {}),
         "status_fields": data.get("status_fields", {}),
+        "abstraction_layer": _classify_abstraction_layer(data),
+        "assurance_state": _classify_assurance_state(data),
         "path": data.get("path"),
     }
 
@@ -822,8 +1032,18 @@ def _semantic_link_targets(root: ET.Element) -> set[str]:
     return targets
 
 
+def _semantic_link_sources(root: ET.Element) -> set[str]:
+    sources: set[str] = set()
+    for link in root.findall(".//link"):
+        source, _ = _link_endpoints(link)
+        if source:
+            sources.add(source)
+    return sources
+
+
 def _load_tree(file_path: str | Path) -> tuple[ET.ElementTree, ET.Element]:
     tree = ET.parse(str(file_path))
+    _validate_schema_status_fields(tree.getroot(), load_schema_metadata())
     return tree, tree.getroot()
 
 
@@ -910,6 +1130,7 @@ def _append_bootstrap_node(
     parent_node_id: str | None = None,
     link_type: str | None = None,
 ) -> tuple[str, str | None]:
+    schema = load_schema_metadata()
     nodes_container = root.find("nodes")
     if nodes_container is None:
         nodes_container = ET.SubElement(root, "nodes")
@@ -940,12 +1161,20 @@ def _append_bootstrap_node(
 
     status_container = ET.SubElement(node, "status-fields")
     _ensure_status_field(status_container, "annotation", _normalize_text(annotation or title))
-    _ensure_status_field(status_container, "confidence", _normalize_text((status_fields or {}).get("confidence", "low" if role in {"evidence-placeholder", "assumption"} else "medium")))
+    _ensure_status_field(
+        status_container,
+        "confidence",
+        _schema_status_value(
+            "confidence",
+            (status_fields or {}).get("confidence", "Low" if role in {"evidence-placeholder", "assumption"} else "Medium"),
+            schema,
+        ),
+    )
     if status_fields:
         for key, value in status_fields.items():
             if key in {"annotation", "confidence"}:
                 continue
-            _ensure_status_field(status_container, str(key), _normalize_text(value))
+            _ensure_status_field(status_container, str(key), _schema_status_value(str(key), value, schema))
 
     node.set("bootstrap-role", _normalize_text(role))
     if attributes:
@@ -957,7 +1186,8 @@ def _append_bootstrap_node(
     created_link_reference: str | None = None
     if parent_node_id:
         link_reference = _unique_link_reference(_existing_ids(root, "link"), parent_node_id, node_id, link_type_key)
-        link = _ensure_link_exists(root, link_reference, _link_type_code(link_type_key), parent_node_id, node_id)
+        # Bootstrap links flow from the new child node to the existing parent node.
+        link = _ensure_link_exists(root, link_reference, _link_type_code(link_type_key), node_id, parent_node_id)
         created_link_reference = _normalize_text(link.attrib.get("reference"))
 
     return node_id, created_link_reference
@@ -968,10 +1198,12 @@ def _bootstrap_case_summary(graph: nx.DiGraph, root_claims: list[dict[str, Any]]
     gap_count = len(gaps)
     defeater_count = sum(1 for _, data in graph.nodes(data=True) if _normalize_text(data.get("type")) == "defeater")
     evidence_count = sum(1 for _, data in graph.nodes(data=True) if _normalize_text(data.get("type")) == "evidence")
+    layer_breakdown = _layered_gap_breakdown(gaps)
+    layer_summary = ", ".join(f"{layer}={count}" for layer, count in layer_breakdown["layer_counts"].items())
     return (
         f"Bootstrap summary: {len(root_claims)} root claim(s), {evidence_count} evidence node(s), "
         f"{defeater_count} defeater node(s), and {gap_count} unresolved gap(s). "
-        f"Primary roots: {claim_titles}."
+        f"Primary roots: {claim_titles}. Layer spread: {layer_summary or 'none'}."
     )
 
 
@@ -984,14 +1216,30 @@ def _find_unresolved_gaps(graph: nx.DiGraph) -> list[dict[str, Any]]:
         attributes = data.get("attributes", {}) or {}
         role = _normalize_text(attributes.get("bootstrap-role") or attributes.get("bootstrap_role") or data.get("bootstrap-role"))
         title = _normalize_text(data.get("title"))
-        children = list(graph.successors(node_id))
+        children = list(graph.predecessors(node_id))
 
         if role in {"evidence-placeholder", "gap"}:
-            gaps.append({"id": node_id, "title": title, "reason": f"bootstrap role is {role}"})
+            gaps.append(
+                {
+                    "id": node_id,
+                    "title": title,
+                    "reason": f"bootstrap role is {role}",
+                    "abstraction_layer": _classify_abstraction_layer(data),
+                    "assurance_state": "Unsupported Gap",
+                }
+            )
             continue
 
         if _normalize_text(data.get("type")) in {"claim", "argument"} and not children:
-            gaps.append({"id": node_id, "title": title, "reason": "unsupported branch"})
+            gaps.append(
+                {
+                    "id": node_id,
+                    "title": title,
+                    "reason": "unsupported branch",
+                    "abstraction_layer": _classify_abstraction_layer(data),
+                    "assurance_state": "Unsupported Gap",
+                }
+            )
 
     return gaps
 
@@ -1005,6 +1253,7 @@ def _materialize_pattern_branch(
     strategy: str,
     parent_node_id: str | None = None,
 ) -> list[str]:
+    schema = load_schema_metadata()
     attributes = dict(branch_spec.get("attributes", {}) or {})
     role = _normalize_text(branch_spec.get("role") or attributes.get("bootstrap-role") or branch_spec.get("node_type"))
     node_id, _ = _append_bootstrap_node(
@@ -1015,7 +1264,11 @@ def _materialize_pattern_branch(
         node_type=_normalize_text(branch_spec.get("node_type", "other")),
         status_fields={
             "annotation": _normalize_text(branch_spec.get("annotation", "")),
-            "confidence": _normalize_text(branch_spec.get("status_fields", {}).get("confidence", "low" if role in {"context", "assumption", "evidence-placeholder"} else "medium")),
+            "confidence": _schema_status_value(
+                "confidence",
+                branch_spec.get("status_fields", {}).get("confidence", "Low" if role in {"context", "assumption", "evidence-placeholder"} else "Medium"),
+                schema,
+            ),
             **{str(key): value for key, value in (branch_spec.get("status_fields", {}) or {}).items() if key not in {"annotation", "confidence"}},
         },
         attributes=attributes,
@@ -1054,24 +1307,24 @@ def get_node_children(parent_node_id: str, file_path: str | None = None) -> dict
 
     for link in root.findall(".//link"):
         source, target = _link_endpoints(link)
-        if source != parent_node_id or not target:
+        if target != parent_node_id or not source:
             continue
 
-        if target not in graph:
+        if source not in graph:
             continue
 
-        node_data = graph.nodes[target]
+        node_data = graph.nodes[source]
         if node_data.get("tag") != "node":
             continue
 
         link_type_code = _normalize_text(link.findtext("type") or link.attrib.get("type"))
         link_type = _link_type_metadata(link_type_code)
-        key = (target, link_type_code)
+        key = (source, link_type_code)
         if key in seen:
             continue
         seen.add(key)
 
-        child_payload = _node_payload(target, node_data)
+        child_payload = _node_payload(source, node_data)
         child_payload["link_type"] = link_type.get("key", "unknown")
         child_payload["link_type_code"] = link_type_code or None
         child_payload["link_reference"] = _normalize_text(link.attrib.get("reference")) or None
@@ -1089,7 +1342,7 @@ def get_root_claims(file_path: str | None = None) -> dict[str, Any]:
     file_path = _resolve_file_path(file_path)
     _, root = _load_tree(file_path)
     graph, _ = _build_graph(root)
-    destination_ids = _semantic_link_targets(root)
+    source_ids = _semantic_link_sources(root)
 
     roots: list[dict[str, Any]] = []
     for node_id, data in graph.nodes(data=True):
@@ -1097,7 +1350,7 @@ def get_root_claims(file_path: str | None = None) -> dict[str, Any]:
             continue
         if data.get("type") not in {"claim", "side-claim", "subcase"}:
             continue
-        if node_id in destination_ids:
+        if node_id in source_ids:
             continue
         roots.append(_node_payload(node_id, data))
 
@@ -1148,6 +1401,7 @@ def _update_text_node(element: ET.Element, candidates: tuple[str, ...], value: s
 
 
 def _update_status_fields(element: ET.Element, status_fields: dict[str, Any]) -> None:
+    schema = load_schema_metadata()
     container = None
     for child in list(element):
         if _local_name(child.tag).lower() in {"status-fields", "statusfield", "status-field"}:
@@ -1168,7 +1422,7 @@ def _update_status_fields(element: ET.Element, status_fields: dict[str, Any]) ->
             existing[key] = child
 
     for key, value in status_fields.items():
-        text = _normalize_text(value)
+        text = _schema_status_value(key, value, schema)
         if key in existing:
             existing[key].text = text
             continue
@@ -1521,7 +1775,7 @@ def create_evidence_placeholder(
     status_fields: dict[str, Any] | None = None,
     attributes: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    merged_status_fields = {"confidence": "low"}
+    merged_status_fields = {"confidence": "Low"}
     if status_fields:
         merged_status_fields.update(status_fields)
     merged_attributes = {"bootstrap-placeholder": "true"}

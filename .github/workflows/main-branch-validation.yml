@@ -1,0 +1,20 @@
+name: Main branch branch-based validation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  validate-main-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify workflow contract
+        env:
+          WORKFLOW_CONTRACT_SPEC: openspec/specs/workflow-contract/spec.md
+          WORKFLOW_VALIDATION_SPEC: openspec/specs/workflow-contract-validation/spec.md
+        run: python3 scripts/validate-workflow-contract.py

@@ -6,6 +6,11 @@
       "enabled": true,
       "command": ["bash", "scripts/start-asce-mcp.sh"]
     },
+    "mitremcp": {
+      "type": "local",
+      "enabled": true,
+      "command": ["bash", "scripts/start-mitremcp.sh"]
+    },
     "lex": {
       "type": "remote",
       "url": "https://lex.lab.i.ai.gov.uk/mcp",
