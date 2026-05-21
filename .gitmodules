@@ -1,6 +1,6 @@
 [submodule "extern/lex-uk-law"]
 	path = extern/lex-uk-law
-	url = https://github.com/i-dot-ai/lex.git
+	url = git@git.pentest.ngs:liz.james/lex-uk-law.git
 [submodule "extern/MITREThreatGraph"]
 	path = extern/MITREThreatGraph
-	url = https://github.com/beLizzard1/MITREThreatGraph.git
+	url = git@git.pentest.ngs:liz.james/mitrethreatgraph.git
